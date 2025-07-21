@@ -1,74 +1,66 @@
-pipeline {
-    agent any
+tools {
+    sonarQube 'sonar-scanner' // Optional: only used when SonarQube is active
+}
 
-    environment {
-        PROJECT_NAME = "Universal-SCA-Scan"
-        DEP_CHECK_PATH = "/opt/dependency-check/dependency-check/bin/dependency-check.sh"
+environment {
+    SONARQUBE_SCANNER_HOME = tool 'sonar-scanner'
+}
+
+stages {
+    stage('Clone Repository') {
+        steps {
+            echo 'Cloning the GitHub Repository.....'
+            sh '''
+              rm -rf temp_repo
+              git clone --depth=1 https://github.com/Akashsonawane571/devsecops-test.git temp_repo
+            '''
+        }
     }
 
-    stages {
+    /*
+    stage('Secret Scan (TruffleHog)') {
+        steps {
+            echo 'Running TruffleHog on latest commit only...'
+            sh '''
+              git clone --depth=1 https://github.com/Akashsonawane571/devsecops-test.git temp_repo
+              cd temp_repo
+              trufflehog --regex --entropy=True --max_depth=10 . > ../trufflehog_report.txt || true
+              cd ..
+              rm -rf temp_repo
+            '''
+            archiveArtifacts artifacts: 'trufflehog_report.txt', onlyIfSuccessful: false
+        }
+    }
+    */
 
-        stage('Clone Repository') {
-            steps {
-                echo 'Cloning the GitHub Repository.....'
-                sh '''
-                    rm -rf temp_repo || true
-                    git clone --depth=1 https://github.com/Akashsonawane571/devsecops-test.git temp_repo
-                '''
+    stage('Dependency Check (OWASP)') {
+        steps {
+            echo 'Running OWASP Dependency-Check...'
+            sh '''
+              cd temp_repo
+              /opt/dependency-check/dependency-check/bin/dependency-check.sh --project "Universal-SCA-Scan" --scan . --format ALL --out ../dependency-check-report || true
+              cd ..
+            '''
+            sh 'mkdir -p dependency-check-report' // ensures dir exists
+            archiveArtifacts artifacts: 'dependency-check-report/*', onlyIfSuccessful: false
+        }
+    }
+
+    /*
+    stage('SonarQube Scan') {
+        steps {
+            echo 'Starting SonarQube SAST Scan...'
+            withSonarQubeEnv('sonar') {
+                sh "${SONARQUBE_SCANNER_HOME}/bin/sonar-scanner"
             }
         }
+    }
+    */
 
-        /*
-        stage('Secret Scan (TruffleHog)') {
-            steps {
-                echo 'Running TruffleHog on latest commit only...'
-                sh '''
-                    cd temp_repo
-                    trufflehog --regex --entropy=True --max_depth=10 . > ../trufflehog_report.txt || true
-                    cd ..
-                    rm -rf temp_repo
-                '''
-                archiveArtifacts artifacts: 'trufflehog_report.txt', onlyIfSuccessful: false
-            }
-        }
-        */
-
-        stage('Dependency Check (OWASP)') {
-            steps {
-                echo 'Running OWASP Dependency-Check...'
-                sh '''
-                    cd temp_repo
-
-                    # Run OWASP Dependency-Check
-                    '"${DEP_CHECK_PATH}"' \
-                        --project "${PROJECT_NAME}" \
-                        --scan . \
-                        --format "ALL" \
-                        --out ../dependency-check-report || true
-
-                    cd ..
-                '''
-                archiveArtifacts artifacts: 'dependency-check-report/*', onlyIfSuccessful: false
-            }
-        }
-
-        /*
-        stage('SonarQube Scan') {
-            steps {
-                echo 'Starting SonarQube SAST Scan...'
-                withSonarQubeEnv('sonar') {
-                    sh "${tool 'sonar-scanner'}/bin/sonar-scanner"
-                }
-            }
-        }
-        */
-
-        stage('Build Docker Image') {
-            steps {
-                echo 'Building Docker Image...'
-                // Uncomment below if needed
-                // sh 'docker build -t juice-shop .'
-            }
+    stage('Build Docker Image') {
+        steps {
+            echo 'Building Docker Image...'
+            // sh 'docker build -t juice-shop .'
         }
     }
 }
