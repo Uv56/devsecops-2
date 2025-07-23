@@ -2,6 +2,11 @@ environment {
     DEPENDENCY_CHECK = '/opt/dependency-check/dependency-check/bin/dependency-check.sh'
 }
 
+tools {
+    // This name must match the one defined under "Manage Jenkins" > "Global Tool Configuration" > SonarQube Scanner
+    sonarScanner 'sonar-scanner'
+}
+
 stages {
 
     stage('Clone Repository') {
@@ -14,7 +19,6 @@ stages {
         }
     }
 
-    // 🛡️ Secret Scanning (Optional: Enable if trufflehog is installed)
     /*
     stage('Secret Scan (TruffleHog)') {
         steps {
@@ -26,10 +30,7 @@ stages {
             archiveArtifacts artifacts: 'trufflehog_report.txt', onlyIfSuccessful: false
         }
     }
-    */
 
-    // 🔒 Dependency Scanning (Optional: Enable if OWASP DC is installed)
-    /*
     stage('Dependency Check (OWASP)') {
         steps {
             echo 'Running OWASP Dependency-Check...'
@@ -44,13 +45,12 @@ stages {
     }
     */
 
-    // 🔍 SonarQube Static Code Analysis
     stage('SonarQube Scan') {
         steps {
             echo 'Starting SonarQube SAST Scan...'
             withSonarQubeEnv('sonar') {
                 script {
-                    def scannerHome = tool 'sonar-scanner'
+                    def scannerHome = tool name: 'sonar-scanner', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
                     sh """
                         cd temp_repo
                         ${scannerHome}/bin/sonar-scanner \
@@ -63,12 +63,11 @@ stages {
         }
     }
 
-    // 🛠️ Docker Build Stage (Optional: Enable if Dockerfile present)
     stage('Build Docker Image') {
         steps {
             echo 'Building Docker Image...'
-            // Uncomment below line if Dockerfile exists in repo
-            // sh 'docker build -t juice-shop .'
+            // Uncomment below if Dockerfile exists
+            // sh 'cd temp_repo && docker build -t juice-shop .'
         }
     }
 }
