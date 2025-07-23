@@ -17,7 +17,7 @@ pipeline {
             }
         }
 
-        // Uncomment this stage if you want secret scanning with TruffleHog
+        // Commented out TruffleHog & Dependency check for now
         /*
         stage('Secret Scan (TruffleHog)') {
             steps {
@@ -29,7 +29,6 @@ pipeline {
                 archiveArtifacts artifacts: 'trufflehog_report.txt', onlyIfSuccessful: false
             }
         }
-        */
 
         stage('Dependency Check (OWASP)') {
             steps {
@@ -43,18 +42,23 @@ pipeline {
                 archiveArtifacts artifacts: 'dependency-check-report/*', onlyIfSuccessful: false
             }
         }
+        */
 
-        // Uncomment this stage if you configure SonarQube in Jenkins
-        /*
         stage('SonarQube Scan') {
             steps {
                 echo 'Starting SonarQube SAST Scan...'
                 withSonarQubeEnv('sonar') {
-                    sh "${SONARQUBE_SCANNER_HOME}/bin/sonar-scanner"
+                    sh '''
+                        cd temp_repo
+                        ${SONARQUBE_SCANNER_HOME}/bin/sonar-scanner \
+                            -Dsonar.projectKey=juice-shop \
+                            -Dsonar.sources=. \
+                            -Dsonar.host.url=http://192.168.81.128:9000 \
+                            -Dsonar.token=YOUR_TOKEN_HERE || true
+                    '''
                 }
             }
         }
-        */
 
         stage('Build Docker Image') {
             steps {
