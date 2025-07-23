@@ -17,7 +17,6 @@ pipeline {
             }
         }
 
-        /*
         stage('Secret Scan (TruffleHog)') {
             steps {
                 echo 'Running TruffleHog on latest commit...'
@@ -29,6 +28,7 @@ pipeline {
             }
         }
 
+        /*
         stage('Dependency Check (OWASP)') {
             steps {
                 echo 'Running OWASP Dependency-Check...'
@@ -41,7 +41,6 @@ pipeline {
                 archiveArtifacts artifacts: 'dependency-check-report/*', onlyIfSuccessful: false
             }
         }
-        */
 
         stage('SonarQube Scan') {
             steps {
@@ -68,6 +67,8 @@ pipeline {
                 // sh 'cd temp_repo && docker build -t juice-shop .'
             }
         }
+        */
+
     }
 
     post {
