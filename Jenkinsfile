@@ -96,7 +96,8 @@ pipeline {
             steps {
                 echo 'Running OWASP ZAP DAST Scan on http://192.168.18.137:3000'
                 sh '''
-                    docker run --rm -v $WORKSPACE:/zap/wrk/:rw -t owasp/zap2docker-stable zap-baseline.py \
+                    docker pull owasp/zap2docker-stable
+                    docker run --rm -v $WORKSPACE:/zap/wrk/:rw -t owasp/zap2docker-stable \
                       -t http://192.168.18.137:3000 \
                       -r zap_report.html || true
                 '''
