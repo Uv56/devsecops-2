@@ -1,10 +1,6 @@
 pipeline {
     agent any
 
-    environment {
-        // DEPENDENCY_CHECK = '/opt/dependency-check/dependency-check/bin/dependency-check.sh'
-    }
-
     stages {
         /*
         stage('Clone Repository') {
