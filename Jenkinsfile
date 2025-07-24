@@ -7,6 +7,7 @@ pipeline {
 
     stages {
 
+        /*
         stage('Clone Repository') {
             steps {
                 echo 'Cloning the GitHub Repository...'
@@ -16,6 +17,7 @@ pipeline {
                 '''
             }
         }
+        */
 
         /*
         stage('Secret Scan (TruffleHog)') {
@@ -28,7 +30,9 @@ pipeline {
                 archiveArtifacts artifacts: 'trufflehog_report.txt', onlyIfSuccessful: false
             }
         }
+        */
 
+        /*
         stage('Dependency Check (OWASP)') {
             steps {
                 echo 'Running OWASP Dependency-Check...'
@@ -42,6 +46,7 @@ pipeline {
             }
         }
         */
+
         /*
         stage('SonarQube Scan') {
             steps {
@@ -60,7 +65,9 @@ pipeline {
                 }
             }
         }
-      */      
+        */
+
+        /*
         stage('Build Project') {
             steps {
                 echo 'Building the Java project with Maven...'
@@ -69,7 +76,9 @@ pipeline {
                 }
             }
         }
+        */
 
+        /*
         stage('Build Docker Image') {
             steps {
                 echo 'Building Docker Image...'
@@ -78,6 +87,7 @@ pipeline {
                 }
             }
         }
+        */
 
         /*
         stage('Deploy to Server') {
@@ -94,12 +104,24 @@ pipeline {
         }
         */
 
+        // ✅ OWASP ZAP DAST SCAN ACTIVE
+        stage('Run ZAP DAST Scan') {
+            steps {
+                echo 'Running OWASP ZAP DAST Scan on http://192.168.18.137:3000'
+                sh '''
+                    docker run --rm -v $WORKSPACE:/zap/wrk/:rw -t owasp/zap2docker-stable zap-baseline.py \
+                      -t http://192.168.18.137:3000 \
+                      -r zap_report.html || true
+                '''
+                archiveArtifacts artifacts: 'zap_report.html', onlyIfSuccessful: false
+            }
+        }
     }
 
     post {
         always {
             echo 'Cleaning up temporary files...'
-            sh 'rm -rf temp_repo dependency-check-report trufflehog_report.txt || true'
+            sh 'rm -rf temp_repo dependency-check-report trufflehog_report.txt zap_report.html || true'
         }
     }
 }
