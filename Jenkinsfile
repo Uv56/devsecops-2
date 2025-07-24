@@ -96,9 +96,9 @@ pipeline {
             steps {
                 echo 'Running OWASP ZAP DAST Scan on http://192.168.18.137:3000'
                 sh '''
-                    docker pull ghcr.io/zaproxy/zap-full
-                    docker run --rm -v $WORKSPACE:/zap/wrk/:rw ghcr.io/zaproxy/zap-full \
-                    zap-baseline.py -t http://192.168.18.137:3000 -r zap_report.html || true
+                    docker pull ghcr.io/zaproxy/zap2docker-stable:latest
+                    docker run --rm -v $WORKSPACE:/zap/wrk/:rw ghcr.io/zaproxy/zap2docker-stable:latest \
+                       zap-baseline.py -t http://192.168.18.137:3000 -r zap_report.html || true
                 '''
                 archiveArtifacts artifacts: 'zap_report.html', onlyIfSuccessful: false
             }
