@@ -17,9 +17,7 @@ pipeline {
                 '''
             }
         }
-        */
 
-        /*
         stage('Secret Scan (TruffleHog)') {
             steps {
                 echo 'Running TruffleHog on latest commit...'
@@ -30,9 +28,7 @@ pipeline {
                 archiveArtifacts artifacts: 'trufflehog_report.txt', onlyIfSuccessful: false
             }
         }
-        */
 
-        /*
         stage('Dependency Check (OWASP)') {
             steps {
                 echo 'Running OWASP Dependency-Check...'
@@ -45,9 +41,7 @@ pipeline {
                 archiveArtifacts artifacts: 'dependency-check-report/*', onlyIfSuccessful: false
             }
         }
-        */
 
-        /*
         stage('SonarQube Scan') {
             steps {
                 echo 'Starting SonarQube SAST Scan...'
@@ -65,9 +59,7 @@ pipeline {
                 }
             }
         }
-        */
 
-        /*
         stage('Build Project') {
             steps {
                 echo 'Building the Java project with Maven...'
@@ -76,9 +68,7 @@ pipeline {
                 }
             }
         }
-        */
 
-        /*
         stage('Build Docker Image') {
             steps {
                 echo 'Building Docker Image...'
@@ -87,9 +77,7 @@ pipeline {
                 }
             }
         }
-        */
 
-        /*
         stage('Deploy to Server') {
             steps {
                 timeout(time: 3, unit: 'MINUTES') {
@@ -104,18 +92,18 @@ pipeline {
         }
         */
 
-        // ✅ OWASP ZAP DAST SCAN ACTIVE
         stage('Run ZAP DAST Scan') {
             steps {
                 echo 'Running OWASP ZAP DAST Scan on http://192.168.18.137:3000'
                 sh '''
-                    docker run --rm -v $WORKSPACE:/zap/wrk/:rw -t owasp/zap2docker-stable zap-baseline.py \
+                    docker run --rm -v $WORKSPACE:/zap/wrk/:rw -t ghcr.io/zaproxy/zap-stable zap-baseline.py \
                       -t http://192.168.18.137:3000 \
                       -r zap_report.html || true
                 '''
                 archiveArtifacts artifacts: 'zap_report.html', onlyIfSuccessful: false
             }
         }
+
     }
 
     post {
