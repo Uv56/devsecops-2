@@ -9,7 +9,7 @@ pipeline {
 
         stage('Clone Repository') {
             steps {
-                echo 'Cloning the GitHub Repository.....'
+                echo 'Cloning the GitHub Repository...'
                 sh '''
                     rm -rf temp_repo
                     git clone --depth=1 https://github.com/Akashsonawane571/devsecops-test.git temp_repo
@@ -17,6 +17,7 @@ pipeline {
             }
         }
 
+        /*
         stage('Secret Scan (TruffleHog)') {
             steps {
                 echo 'Running TruffleHog on latest commit...'
@@ -28,7 +29,6 @@ pipeline {
             }
         }
 
-        /*
         stage('Dependency Check (OWASP)') {
             steps {
                 echo 'Running OWASP Dependency-Check...'
@@ -41,7 +41,8 @@ pipeline {
                 archiveArtifacts artifacts: 'dependency-check-report/*', onlyIfSuccessful: false
             }
         }
-
+        */
+        /*
         stage('SonarQube Scan') {
             steps {
                 echo 'Starting SonarQube SAST Scan...'
@@ -59,12 +60,36 @@ pipeline {
                 }
             }
         }
+      */      
+        stage('Build Project') {
+            steps {
+                echo 'Building the Java project with Maven...'
+                dir('temp_repo') {
+                    sh 'mvn clean install -DskipTests'
+                }
+            }
+        }
 
         stage('Build Docker Image') {
             steps {
                 echo 'Building Docker Image...'
-                // Uncomment if Dockerfile exists
-                // sh 'cd temp_repo && docker build -t juice-shop .'
+                dir('temp_repo') {
+                    sh 'docker build -t juice-shop .'
+                }
+            }
+        }
+
+        /*
+        stage('Deploy to Server') {
+            steps {
+                timeout(time: 3, unit: 'MINUTES') {
+                    sshagent(credentials: ['app-server']) {
+                        sh '''
+                            scp -o StrictHostKeyChecking=no temp_repo/webgoat-server/target/webgoat-server-v8.2.0-SNAPSHOT.jar ubuntu@3.109.152.116:/WebGoat
+                            ssh -o StrictHostKeyChecking=no ubuntu@3.109.152.116 "nohup java -jar /WebGoat/webgoat-server-v8.2.0-SNAPSHOT.jar > /dev/null 2>&1 &"
+                        '''
+                    }
+                }
             }
         }
         */
