@@ -3,6 +3,8 @@ pipeline {
 
     environment {
         DEPENDENCY_CHECK = '/opt/dependency-check/dependency-check/bin/dependency-check.sh'
+        NIKTO_REPORT = 'nikto_report.html'
+        TARGET_URL = 'http://192.168.18.137:3000'
     }
 
     stages {
@@ -92,14 +94,17 @@ pipeline {
         }
         */
 
-        stage('Run ZAP DAST Scan') {
+        stage('Run Nikto DAST Scan') {
             steps {
-                echo 'Running OWASP ZAP DAST Scan on http://192.168.18.137:3000'
+                echo 'Running Nikto DAST Scan...'
                 sh '''
-                    docker run --rm -v $WORKSPACE:/zap/wrk/:rw ghcr.io/zaproxy/zap2docker-stable:latest \
-                       zap-baseline.py -t http://192.168.18.137:3000 -r zap_report.html || true
+                    rm -rf nikto
+                    git clone https://github.com/sullo/nikto.git
+                    cd nikto/program
+                    chmod +x nikto.pl
+                    ./nikto.pl -h $TARGET_URL -o $WORKSPACE/$NIKTO_REPORT -Format html || true
                 '''
-                archiveArtifacts artifacts: 'zap_report.html', onlyIfSuccessful: false
+                archiveArtifacts artifacts: "${NIKTO_REPORT}", onlyIfSuccessful: false
             }
         }
     }
@@ -107,7 +112,9 @@ pipeline {
     post {
         always {
             echo 'Cleaning up temporary files...'
-            sh 'rm -rf temp_repo dependency-check-report trufflehog_report.txt zap_report.html || true'
+            sh '''
+                rm -rf temp_repo dependency-check-report trufflehog_report.txt nikto_report.html nikto || true
+            '''
         }
     }
 }
