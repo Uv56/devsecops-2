@@ -1,78 +1,121 @@
 pipeline {
     agent any
 
+    environment {
+        DEPENDENCY_CHECK = '/opt/dependency-check/dependency-check/bin/dependency-check.sh'
+        ZAP_REPORT_HTML = 'zap_report.html'
+        ZAP_REPORT_XML = 'zap_report.xml'
+        ZAP_REPORT_JSON = 'zap_report.json'
+        TARGET_URL = 'http://192.168.18.137:3000'
+    }
+
     stages {
 
+        stage('Clone Repository') {
+            steps {
+                echo 'Cloning the GitHub Repository...'
+                sh '''
+                    rm -rf temp_repo
+                    git clone --depth=1 https://github.com/Akashsonawane571/devsecops-test.git temp_repo
+                '''
+            }
+        }
         /*
-        // === Commented Out: Secret Scan (TruffleHog) ===
         stage('Secret Scan (TruffleHog)') {
             steps {
-                echo 'Skipping TruffleHog secret scan...'
+                echo 'Running TruffleHog on latest commit...'
+                sh '''
+                    cd temp_repo
+                    trufflehog --regex --entropy=True --max_depth=10 . > ../trufflehog_report.txt || true
+                '''
+                archiveArtifacts artifacts: 'trufflehog_report.txt', onlyIfSuccessful: false
             }
         }
 
-        // === Commented Out: Dependency Check ===
-        stage('Dependency Check') {
+        stage('Dependency Check (OWASP)') {
             steps {
-                echo 'Skipping Dependency Check...'
+                echo 'Running OWASP Dependency-Check...'
+                sh '''
+                    mkdir -p dependency-check-report
+                    cd temp_repo
+                    $DEPENDENCY_CHECK --project "Universal-SCA-Scan" --scan . --format ALL --out ../dependency-check-report || true
+                    cd ..
+                '''
+                archiveArtifacts artifacts: 'dependency-check-report/*', onlyIfSuccessful: false
             }
         }
 
-        // === Commented Out: SonarQube Scan ===
         stage('SonarQube Scan') {
             steps {
-                echo 'Skipping SonarQube scan...'
+                echo 'Starting SonarQube SAST Scan...'
+                withSonarQubeEnv('sonar') {
+                    script {
+                        def scannerHome = tool name: 'sonar-scanner'
+                        sh """
+                            cd temp_repo
+                            ${scannerHome}/bin/sonar-scanner \
+                              -Dsonar.projectKey=juice-shop \
+                              -Dsonar.sources=. \
+                              -Dsonar.host.url=http://192.168.81.128:9000
+                        """
+                    }
+                }
             }
         }
 
-        // === Commented Out: Build Project ===
         stage('Build Project') {
             steps {
-                echo 'Skipping Maven build...'
+                echo 'Building the Java project with Maven...'
+                dir('temp_repo') {
+                    sh 'mvn clean install -DskipTests'
+                }
             }
         }
 
-        // === Commented Out: Build Docker Image ===
         stage('Build Docker Image') {
             steps {
-                echo 'Skipping Docker build...'
+                echo 'Building Docker Image...'
+                dir('temp_repo') {
+                    sh 'docker build -t juice-shop .'
+                }
             }
         }
 
-        // === Commented Out: Deploy to Server ===
         stage('Deploy to Server') {
             steps {
-                echo 'Skipping deployment...'
+                timeout(time: 3, unit: 'MINUTES') {
+                    sshagent(credentials: ['app-server']) {
+                        sh '''
+                            scp -o StrictHostKeyChecking=no temp_repo/webgoat-server/target/webgoat-server-v8.2.0-SNAPSHOT.jar ubuntu@3.109.152.116:/WebGoat
+                            ssh -o StrictHostKeyChecking=no ubuntu@3.109.152.116 "nohup java -jar /WebGoat/webgoat-server-v8.2.0-SNAPSHOT.jar > /dev/null 2>&1 &"
+                        '''
+                    }
+                }
             }
         }
         */
-
-        // === ✅ Active Stage: OWASP ZAP DAST Scan ===
-        stage('OWASP ZAP DAST Scan') {
+        stage('Run ZAP DAST Scan (Baseline)') {
             steps {
-                script {
-                    echo "🔍 Starting OWASP ZAP scan on http://192.168.18.137:3000"
-
-                    // Pull and run the ZAP scan
-                    sh '''
-                        docker run --rm -v $WORKSPACE:/zap/wrk/:rw owasp/zap2docker-stable zap-baseline.py \
-                            -t http://192.168.18.137:3000 \
-                            -r zap_report.html \
-                            -x zap_report.xml \
-                            -J zap_report.json || true
-                    '''
-                }
-
-                // Archive all ZAP reports
-                archiveArtifacts artifacts: 'zap_report.*', allowEmptyArchive: true
+                echo 'Running ZAP Baseline DAST Scan...'
+                sh '''
+                    docker run --rm \
+                      -v $WORKSPACE:/zap/wrk/:rw \
+                      zaproxy/zap-stable \
+                      zap-baseline.py -t $TARGET_URL \
+                      -r $ZAP_REPORT_HTML -x $ZAP_REPORT_XML -J $ZAP_REPORT_JSON || true
+                '''
+                archiveArtifacts artifacts: "${ZAP_REPORT_HTML}, ${ZAP_REPORT_XML}, ${ZAP_REPORT_JSON}", onlyIfSuccessful: false
             }
         }
     }
 
     post {
         always {
-            echo "🧹 Cleaning up temporary scan files..."
-            sh 'rm -f zap_report.*'
+            echo 'Cleaning up temporary files...'
+            sh '''
+                rm -rf temp_repo dependency-check-report trufflehog_report.txt \
+                       $ZAP_REPORT_HTML $ZAP_REPORT_XML $ZAP_REPORT_JSON || true
+            '''
         }
     }
 }
