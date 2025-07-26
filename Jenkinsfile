@@ -6,7 +6,7 @@ pipeline {
         ZAP_REPORT_HTML = 'zap_report.html'
         ZAP_REPORT_XML = 'zap_report.xml'
         ZAP_REPORT_JSON = 'zap_report.json'
-        TARGET_URL = 'http://98.81.237.97:8080/WebGoat'
+       // TARGET_URL = 'http://98.81.237.97:8080/WebGoat'
     }
 
     stages {
@@ -58,7 +58,7 @@ pipeline {
                       sonarsource/sonar-scanner-cli \
                       -Dsonar.projectKey=devsecops-test \
                       -Dsonar.sources=. \
-                      -Dsonar.host.url=http://localhost:9000 \
+                      -Dsonar.host.url=http://192.168.18.137:9000 \
                       -Dsonar.login=$SONAR_TOKEN
                 '''
             }
