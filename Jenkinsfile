@@ -35,10 +35,10 @@ pipeline {
 
        stage('Dependency Check (OWASP)') {
          steps {
-        echo 'Running OWASP Dependency-Check...'
+            echo 'Running OWASP Dependency-Check...'
 
-        withCredentials([string(credentialsId: 'NVD_API_KEY', variable: 'NVD_KEY')]) {
-            sh '''
+           withCredentials([string(credentialsId: 'NVD_API_KEY', variable: 'NVD_KEY')]) {
+              sh '''
                 mkdir -p dependency-check-report dc-data
                 cd temp_repo
 
@@ -50,11 +50,13 @@ pipeline {
                     --out ../dependency-check-report \
                     --nvdApiKey $NVD_KEY || true
 
-                cd ..
+                    cd ..
+                    
             '''
+             archiveArtifacts artifacts: 'dependency-check-report/*', onlyIfSuccessful: false   
         }
 
-        archiveArtifacts artifacts: 'dependency-check-report/**/*.*', onlyIfSuccessful: false
+        
     }
 }
 
