@@ -51,7 +51,7 @@ pipeline {
     steps {
         echo 'Starting SonarQube SAST Scan...'
         withSonarQubeEnv('sonarqube') {
-            withCredentials([string(credentialsId: 'SONAR_TOKEN_ID', variable: 'SONAR_TOKEN')]) {
+            withCredentials([string(credentialsId: 'newtoken', variable: 'SONAR_TOKEN')]) {
                 sh '''
                     docker run --rm \
                       -v "$PWD/temp_repo:/usr/src" \
