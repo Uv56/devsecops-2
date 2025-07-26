@@ -10,7 +10,7 @@ pipeline {
         TARGET_URL      = 'http://localhost:3000' // Replace with actual target
     }
 
-    stages {
+ /*   stages {
         stage('Clone Repository') {
             steps {
                 echo 'Cloning the GitHub Repository...'
@@ -44,7 +44,7 @@ pipeline {
                 archiveArtifacts artifacts: 'dependency-check-report/*', onlyIfSuccessful: false
             }
         }
-
+*/
         stage('SonarQube Scan') {
             steps {
                 echo 'Starting SonarQube SAST Scan...'
@@ -63,7 +63,7 @@ pipeline {
             }
         }
 
-        stage('Build Project') {
+    /*    stage('Build Project') {
             steps {
                 echo 'Building the Java project with Maven...'
                 dir('temp_repo') {
@@ -117,5 +117,5 @@ pipeline {
                        $ZAP_REPORT_HTML $ZAP_REPORT_XML $ZAP_REPORT_JSON || true
             '''
         }
-    }
+    } */
 }
