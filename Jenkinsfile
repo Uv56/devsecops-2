@@ -10,7 +10,7 @@ pipeline {
         TARGET_URL      = 'http://localhost:3000' // Replace with actual target
     }
 
- /*   stages {
+    stages {
         stage('Clone Repository') {
             steps {
                 echo 'Cloning the GitHub Repository...'
@@ -21,7 +21,7 @@ pipeline {
             }
         }
 
-        stage('Secret Scan (TruffleHog)') {
+    /*    stage('Secret Scan (TruffleHog)') {
             steps {
                 echo 'Running TruffleHog on latest commit...'
                 sh '''
