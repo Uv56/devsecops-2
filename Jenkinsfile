@@ -47,23 +47,25 @@ pipeline {
         }
         */
 
-        stage('SonarQube Scan') {
-            steps {
-                echo 'Starting SonarQube SAST Scan...'
-                withSonarQubeEnv('sonarqube') {
-                    withCredentials([string(credentialsId: 'newtoken', variable: 'SONAR_TOKEN')]) {
-                        sh '''
-                            cd temp_repo
-                            $SONAR_SCANNER/usr/bin/sonar-scanner \
-                              -Dsonar.projectKey=devsecops-test \
-                              -Dsonar.sources=. \
-                              -Dsonar.host.url=http://localhost:9000 \
-                              -Dsonar.login=$SONAR_TOKEN
-                        '''
-                    }
-                }
+       stage('SonarQube Scan') {
+    steps {
+        echo 'Starting SonarQube SAST Scan...'
+        withSonarQubeEnv('sonarqube') {
+            withCredentials([string(credentialsId: 'SONAR_TOKEN_ID', variable: 'SONAR_TOKEN')]) {
+                sh '''
+                    docker run --rm \
+                      -v "$PWD/temp_repo:/usr/src" \
+                      sonarsource/sonar-scanner-cli \
+                      -Dsonar.projectKey=devsecops-test \
+                      -Dsonar.sources=. \
+                      -Dsonar.host.url=http://localhost:9000 \
+                      -Dsonar.login=$SONAR_TOKEN
+                '''
             }
         }
+    }
+}
+
 
         /*
         stage('Build Project') {
