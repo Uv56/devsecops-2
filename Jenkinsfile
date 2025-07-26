@@ -54,7 +54,7 @@ pipeline {
                     withCredentials([string(credentialsId: 'newtoken', variable: 'SONAR_TOKEN')]) {
                         sh '''
                             cd temp_repo
-                            $SONAR_SCANNER/bin/sonar-scanner \
+                            $SONAR_SCANNER/usr/bin/sonar-scanner \
                               -Dsonar.projectKey=devsecops-test \
                               -Dsonar.sources=. \
                               -Dsonar.host.url=http://localhost:9000 \
