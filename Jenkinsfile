@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     environment {
-        DEPENDENCY_CHECK = '/opt/dependency-check/dependency-check/bin/dependency-check.sh'
         ZAP_REPORT_HTML = 'zap_report.html'
         ZAP_REPORT_XML = 'zap_report.xml'
         ZAP_REPORT_JSON = 'zap_report.json'
@@ -24,8 +23,8 @@ pipeline {
             steps {
                 echo 'Running TruffleHog on latest commit...'
                 sh '''
-                    cd temp_repo
-                    trufflehog --regex --entropy=True --max_depth=10 . > ../trufflehog_report.txt || true
+                    docker run --rm -v $(pwd)/temp_repo:/project trufflesecurity/trufflehog \
+                    filesystem /project > trufflehog_report.txt || true
                 '''
                 archiveArtifacts artifacts: 'trufflehog_report.txt', onlyIfSuccessful: false
             }
@@ -33,12 +32,18 @@ pipeline {
 
         stage('Dependency Check (OWASP)') {
             steps {
-                echo 'Running OWASP Dependency-Check...'
+                echo 'Running OWASP Dependency-Check using Docker...'
                 sh '''
                     mkdir -p dependency-check-report
-                    cd temp_repo
-                    $DEPENDENCY_CHECK --project "Universal-SCA-Scan" --scan . --format ALL --out ../dependency-check-report || true
-                    cd ..
+                    docker run --rm \
+                        -v $(pwd)/temp_repo:/src \
+                        -v $(pwd)/dependency-check-report:/report \
+                        -v $(pwd)/odc-data:/usr/share/dependency-check/data \
+                        owasp/dependency-check \
+                        --project "Universal-SCA-Scan" \
+                        --scan /src \
+                        --format "ALL" \
+                        --out /report || true
                 '''
                 archiveArtifacts artifacts: 'dependency-check-report/*', onlyIfSuccessful: false
             }
@@ -113,7 +118,7 @@ pipeline {
         always {
             echo 'Cleaning up temporary files...'
             sh '''
-                rm -rf temp_repo dependency-check-report trufflehog_report.txt \
+                rm -rf temp_repo dependency-check-report odc-data trufflehog_report.txt \
                        $ZAP_REPORT_HTML $ZAP_REPORT_XML $ZAP_REPORT_JSON || true
             '''
         }
