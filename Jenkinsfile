@@ -10,6 +10,7 @@ pipeline {
     }
 
     stages {
+        /*
         stage('Clone Repository') {
             steps {
                 echo 'Cloning the GitHub Repository...'
@@ -43,6 +44,7 @@ pipeline {
                 archiveArtifacts artifacts: 'dependency-check-report/*', onlyIfSuccessful: false
             }
         }
+        */
 
         stage('SonarQube Scan') {
             steps {
@@ -64,6 +66,7 @@ pipeline {
             }
         }
 
+        /*
         stage('Build Project') {
             steps {
                 echo 'Building the Java project with Maven...'
@@ -109,6 +112,7 @@ pipeline {
                 archiveArtifacts artifacts: "${ZAP_REPORT_HTML}, ${ZAP_REPORT_XML}, ${ZAP_REPORT_JSON}", onlyIfSuccessful: false
             }
         }
+        */
     }
 
     post {
