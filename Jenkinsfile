@@ -33,18 +33,31 @@ pipeline {
         }
         */
 
-        stage('Dependency Check (OWASP)') {
-            steps {
-                echo 'Running OWASP Dependency-Check...'
-                sh '''
-                    mkdir -p dependency-check-report
-                    cd temp_repo
-                    $DEPENDENCY_CHECK --project "Universal-SCA-Scan" --scan . --format ALL --out ../dependency-check-report || true
-                    cd ..
-                '''
-                archiveArtifacts artifacts: 'dependency-check-report/**/*.*', onlyIfSuccessful: false
-            }
+       stage('Dependency Check (OWASP)') {
+         steps {
+        echo 'Running OWASP Dependency-Check...'
+
+        withCredentials([string(credentialsId: 'NVD_API_KEY', variable: 'NVD_KEY')]) {
+            sh '''
+                mkdir -p dependency-check-report dc-data
+                cd temp_repo
+
+                $DEPENDENCY_CHECK \
+                    --project "Universal-SCA-Scan" \
+                    --scan . \
+                    --format ALL \
+                    --data ../dc-data \
+                    --out ../dependency-check-report \
+                    --nvdApiKey $NVD_KEY || true
+
+                cd ..
+            '''
         }
+
+        archiveArtifacts artifacts: 'dependency-check-report/**/*.*', onlyIfSuccessful: false
+    }
+}
+
         
       /*
        stage('SonarQube Scan') {
