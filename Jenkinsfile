@@ -52,13 +52,11 @@ pipeline {
                 withSonarQubeEnv('sonarqube') {
                     withCredentials([string(credentialsId: 'newtoken', variable: 'SONAR_TOKEN')]) {
                         sh '''
-                            rm -rf temp_repo
-                            git clone --depth=1  https://github.com/Akashsonawane571/devsecops-test.git temp_repo
                             cd temp_repo
                             $SONAR_SCANNER/bin/sonar-scanner \
                               -Dsonar.projectKey=devsecops-test \
                               -Dsonar.sources=. \
-                              -Dsonar.host.url=http://192.168.18.137:9000 \
+                              -Dsonar.host.url=http://localhost:9000 \
                               -Dsonar.login=$SONAR_TOKEN
                         '''
                     }
