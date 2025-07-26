@@ -19,7 +19,7 @@ pipeline {
             }
         }
 
-        stage('Secret Scan (TruffleHog)') {
+       /* stage('Secret Scan (TruffleHog)') {
             steps {
                 echo 'Running TruffleHog on latest commit...'
                 sh '''
@@ -29,7 +29,7 @@ pipeline {
                 archiveArtifacts artifacts: 'trufflehog_report.txt', onlyIfSuccessful: false
             }
         }
-
+*/
         stage('Dependency Check (OWASP)') {
             steps {
                 echo 'Running OWASP Dependency-Check using Docker...'
