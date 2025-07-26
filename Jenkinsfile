@@ -21,7 +21,7 @@ pipeline {
             }
         }
 
-    /*    stage('Secret Scan (TruffleHog)') {
+        stage('Secret Scan (TruffleHog)') {
             steps {
                 echo 'Running TruffleHog on latest commit...'
                 sh '''
@@ -44,7 +44,7 @@ pipeline {
                 archiveArtifacts artifacts: 'dependency-check-report/*', onlyIfSuccessful: false
             }
         }
-*/
+
         stage('SonarQube Scan') {
             steps {
                 echo 'Starting SonarQube SAST Scan...'
@@ -63,7 +63,7 @@ pipeline {
             }
         }
 
-    /*    stage('Build Project') {
+        stage('Build Project') {
             steps {
                 echo 'Building the Java project with Maven...'
                 dir('temp_repo') {
@@ -118,5 +118,5 @@ pipeline {
             '''
         }
     } 
-    */
+    
 }
