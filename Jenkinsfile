@@ -6,11 +6,10 @@ pipeline {
         ZAP_REPORT_HTML = 'zap_report.html'
         ZAP_REPORT_XML = 'zap_report.xml'
         ZAP_REPORT_JSON = 'zap_report.json'
-        TARGET_URL = 'http://192.168.18.137:3000'
+        TARGET_URL = 'http://98.81.237.97:8080/WebGoat'
     }
 
     stages {
-
         stage('Clone Repository') {
             steps {
                 echo 'Cloning the GitHub Repository...'
@@ -20,7 +19,7 @@ pipeline {
                 '''
             }
         }
-        /*
+
         stage('Secret Scan (TruffleHog)') {
             steps {
                 echo 'Running TruffleHog on latest commit...'
@@ -81,27 +80,28 @@ pipeline {
             }
         }
 
-        stage('Deploy to Server') {
+        stage('Deploy to App Server') {
             steps {
                 timeout(time: 3, unit: 'MINUTES') {
                     sshagent(credentials: ['app-server']) {
                         sh '''
-                            scp -o StrictHostKeyChecking=no temp_repo/webgoat-server/target/webgoat-server-v8.2.0-SNAPSHOT.jar ubuntu@3.109.152.116:/WebGoat
-                            ssh -o StrictHostKeyChecking=no ubuntu@3.109.152.116 "nohup java -jar /WebGoat/webgoat-server-v8.2.0-SNAPSHOT.jar > /dev/null 2>&1 &"
+                            echo "Deploying JAR to App Server..."
+                            scp -o StrictHostKeyChecking=no temp_repo/webgoat-server/target/webgoat-server-v8.2.0-SNAPSHOT.jar ubuntu@98.81.237.97:/WebGoat
+                            ssh -o StrictHostKeyChecking=no ubuntu@98.81.237.97 "pkill -f webgoat || true; nohup java -jar /WebGoat/webgoat-server-v8.2.0-SNAPSHOT.jar > /dev/null 2>&1 &"
                         '''
                     }
                 }
             }
         }
-        */
-        stage('Run ZAP DAST Scan (Baseline)') {
+
+        stage('Run ZAP DAST Scan') {
             steps {
-                echo 'Running ZAP Baseline DAST Scan...'
+                echo 'Running ZAP Full DAST Scan on deployed application...'
                 sh '''
                     docker run --rm \
                       -v $WORKSPACE:/zap/wrk/:rw \
-                      zaproxy/zap-stable \
-                      zap-baseline.py -t $TARGET_URL \
+                      owasp/zap2docker-stable \
+                      zap-full-scan.py -t $TARGET_URL \
                       -r $ZAP_REPORT_HTML -x $ZAP_REPORT_XML -J $ZAP_REPORT_JSON || true
                 '''
                 archiveArtifacts artifacts: "${ZAP_REPORT_HTML}, ${ZAP_REPORT_XML}, ${ZAP_REPORT_JSON}", onlyIfSuccessful: false
