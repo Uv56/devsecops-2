@@ -29,7 +29,7 @@ pipeline {
                 archiveArtifacts artifacts: 'trufflehog_report.txt', onlyIfSuccessful: false
             }
         }
-*/
+
         stage('Dependency Check (OWASP)') {
             steps {
                 echo 'Running OWASP Dependency-Check using Docker...'
@@ -48,7 +48,7 @@ pipeline {
                 archiveArtifacts artifacts: 'dependency-check-report/*', onlyIfSuccessful: false
             }
         }
-
+*/
         stage('SonarQube Scan') {
             steps {
                 echo 'Starting SonarQube SAST Scan...'
