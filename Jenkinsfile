@@ -42,7 +42,7 @@ pipeline {
                     $DEPENDENCY_CHECK --project "Universal-SCA-Scan" --scan . --format ALL --out ../dependency-check-report || true
                     cd ..
                 '''
-                archiveArtifacts artifacts: 'dependency-check-report/*', onlyIfSuccessful: false
+                archiveArtifacts artifacts: 'dependency-check-report/**/*.*', onlyIfSuccessful: false
             }
         }
         
