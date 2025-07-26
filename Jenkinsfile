@@ -57,10 +57,10 @@ pipeline {
                         def scannerHome = tool name: 'sonar-scanner'
                         sh """
                             cd temp_repo
-                            ${scannerHome}/bin/sonar-scanner \
-                              -Dsonar.projectKey=juice-shop \
-                              -Dsonar.sources=. \
-                              -Dsonar.host.url=http://192.168.81.128:9000
+                            ${scannerHome}/bin/sonar-scanner \\
+                              -Dsonar.projectKey=juice-shop \\
+                              -Dsonar.sources=. \\
+                              -Dsonar.host.url=http://192.168.18.137:9000
                         """
                     }
                 }
