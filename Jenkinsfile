@@ -3,11 +3,10 @@ pipeline {
 
     environment {
         DEPENDENCY_CHECK = '/opt/dependency-check/dependency-check/bin/dependency-check.sh'
-        SONAR_SCANNER = tool name: 'sonar-scanner'
         ZAP_REPORT_HTML = 'zap_report.html'
-        ZAP_REPORT_XML  = 'zap_report.xml'
+        ZAP_REPORT_XML = 'zap_report.xml'
         ZAP_REPORT_JSON = 'zap_report.json'
-        TARGET_URL      = 'http://localhost:3000' // Replace with actual target
+        TARGET_URL = 'http://98.81.237.97:8080/WebGoat'
     }
 
     stages {
@@ -25,8 +24,8 @@ pipeline {
             steps {
                 echo 'Running TruffleHog on latest commit...'
                 sh '''
-                    docker run --rm -v $(pwd)/temp_repo:/project trufflesecurity/trufflehog \
-                    filesystem /project > trufflehog_report.txt || true
+                    cd temp_repo
+                    trufflehog --regex --entropy=True --max_depth=10 . > ../trufflehog_report.txt || true
                 '''
                 archiveArtifacts artifacts: 'trufflehog_report.txt', onlyIfSuccessful: false
             }
@@ -51,6 +50,8 @@ pipeline {
                 withSonarQubeEnv('sonarqube') {
                     withCredentials([string(credentialsId: 'newtoken', variable: 'SONAR_TOKEN')]) {
                         sh '''
+                            rm -rf temp_repo
+                            git clone --depth=1  https://github.com/Akashsonawane571/devsecops-test.git temp_repo
                             cd temp_repo
                             $SONAR_SCANNER/bin/sonar-scanner \
                               -Dsonar.projectKey=devsecops-test \
@@ -81,27 +82,28 @@ pipeline {
             }
         }
 
-        stage('Deploy to Server') {
+        stage('Deploy to App Server') {
             steps {
                 timeout(time: 3, unit: 'MINUTES') {
                     sshagent(credentials: ['app-server']) {
                         sh '''
-                            scp -o StrictHostKeyChecking=no temp_repo/webgoat-server/target/webgoat-server-v8.2.0-SNAPSHOT.jar ubuntu@3.109.152.116:/WebGoat
-                            ssh -o StrictHostKeyChecking=no ubuntu@3.109.152.116 "nohup java -jar /WebGoat/webgoat-server-v8.2.0-SNAPSHOT.jar > /dev/null 2>&1 &"
+                            echo "Deploying JAR to App Server..."
+                            scp -o StrictHostKeyChecking=no temp_repo/webgoat-server/target/webgoat-server-v8.2.0-SNAPSHOT.jar ubuntu@98.81.237.97:/WebGoat
+                            ssh -o StrictHostKeyChecking=no ubuntu@98.81.237.97 "pkill -f webgoat || true; nohup java -jar /WebGoat/webgoat-server-v8.2.0-SNAPSHOT.jar > /dev/null 2>&1 &"
                         '''
                     }
                 }
             }
         }
 
-        stage('Run ZAP DAST Scan (Baseline)') {
+        stage('Run ZAP DAST Scan') {
             steps {
-                echo 'Running ZAP Baseline DAST Scan...'
+                echo 'Running ZAP Full DAST Scan on deployed application...'
                 sh '''
                     docker run --rm \
                       -v $WORKSPACE:/zap/wrk/:rw \
-                      zaproxy/zap-stable \
-                      zap-baseline.py -t $TARGET_URL \
+                      owasp/zap2docker-stable \
+                      zap-full-scan.py -t $TARGET_URL \
                       -r $ZAP_REPORT_HTML -x $ZAP_REPORT_XML -J $ZAP_REPORT_JSON || true
                 '''
                 archiveArtifacts artifacts: "${ZAP_REPORT_HTML}, ${ZAP_REPORT_XML}, ${ZAP_REPORT_JSON}", onlyIfSuccessful: false
@@ -117,6 +119,5 @@ pipeline {
                        $ZAP_REPORT_HTML $ZAP_REPORT_XML $ZAP_REPORT_JSON || true
             '''
         }
-    } 
-    
+    }
 }
