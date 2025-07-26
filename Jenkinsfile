@@ -33,7 +33,7 @@ pipeline {
         }
         */
 
-       /* stage('Dependency Check (OWASP)') {
+        stage('Dependency Check (OWASP)') {
             steps {
                 echo 'Running OWASP Dependency-Check...'
                 sh '''
@@ -45,8 +45,8 @@ pipeline {
                 archiveArtifacts artifacts: 'dependency-check-report/*', onlyIfSuccessful: false
             }
         }
-        */
-
+        
+      /*
        stage('SonarQube Scan') {
           steps {
         echo 'Starting SonarQube SAST Scan...'
@@ -99,7 +99,8 @@ pipeline {
                 }
             }
         }
-
+        */
+       /*
         stage('Run ZAP DAST Scan') {
             steps {
                 echo 'Running ZAP Full DAST Scan on deployed application...'
@@ -124,6 +125,6 @@ pipeline {
                        $ZAP_REPORT_HTML $ZAP_REPORT_XML $ZAP_REPORT_JSON || true
             '''
         }
-    }
-    */
+    }*/
+    
 }
