@@ -48,7 +48,7 @@ pipeline {
         */
 
        stage('SonarQube Scan') {
-    steps {
+          steps {
         echo 'Starting SonarQube SAST Scan...'
         withSonarQubeEnv('sonarqube') {
             withCredentials([string(credentialsId: 'newtoken', variable: 'SONAR_TOKEN')]) {
@@ -116,7 +116,7 @@ pipeline {
         */
     }
 
-    post {
+/*    post {
         always {
             echo 'Cleaning up temporary files...'
             sh '''
@@ -125,4 +125,5 @@ pipeline {
             '''
         }
     }
+    */
 }
