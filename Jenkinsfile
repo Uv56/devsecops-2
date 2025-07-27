@@ -31,12 +31,16 @@ pipeline {
             }
         }
 
-     stage('Dependency Check (OWASP)') {
+    stage('Dependency Check (OWASP)') {
     environment {
         REPORT_DIR = 'dependency-check-report'
     }
     steps {
         echo 'Running OWASP Dependency-Check in Docker...'
+        dir('temp_repo') {
+            // Install dependencies first
+            sh 'npm install || true'
+        }
         withCredentials([string(credentialsId: 'nvdkey', variable: 'NVD_API_KEY')]) {
             sh '''
                 mkdir -p ${REPORT_DIR}
