@@ -36,11 +36,12 @@ pipeline {
         REPORT_DIR = 'dependency-check-report'
     }
     steps {
-        echo 'Running OWASP Dependency-Check in Docker...'
+        echo 'Installing Node dependencies before Dependency-Check...'
         dir('temp_repo') {
-            // Install dependencies first
             sh 'npm install || true'
         }
+
+        echo 'Running OWASP Dependency-Check with --disableUpdate for faster test...'
         withCredentials([string(credentialsId: 'nvdkey', variable: 'NVD_API_KEY')]) {
             sh '''
                 mkdir -p ${REPORT_DIR}
@@ -50,6 +51,7 @@ pipeline {
                     -e NVD_API_KEY=${NVD_API_KEY} \
                     owasp/dependency-check:latest \
                     --scan /src \
+                    --disableUpdate \
                     --exclude '**/passwordProtected.zip' \
                     --exclude '**/videoExploit.zip' \
                     --exclude '**/arbitraryFileWrite.zip' \
@@ -58,9 +60,11 @@ pipeline {
                     --out /report
             '''
         }
+
         archiveArtifacts artifacts: 'dependency-check-report/*.*', allowEmptyArchive: true
     }
 }
+
 
         stage('SonarQube Scan') {
           steps {
