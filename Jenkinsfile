@@ -3,7 +3,6 @@ pipeline {
 
     environment {
         DEPENDENCY_CHECK = '/opt/dependency-check/dependency-check/bin/dependency-check.sh'
-        SONAR_SCANNER = tool name: 'sonar-scanner'
         ZAP_REPORT_HTML = 'zap_report.html'
         ZAP_REPORT_XML  = 'zap_report.xml'
         ZAP_REPORT_JSON = 'zap_report.json'
@@ -46,22 +45,23 @@ pipeline {
         }
 
         stage('SonarQube Scan') {
-            steps {
-                echo 'Starting SonarQube SAST Scan...'
-                withSonarQubeEnv('sonarqube') {
-                    withCredentials([string(credentialsId: 'newtoken', variable: 'SONAR_TOKEN')]) {
-                        sh '''
-                            cd temp_repo
-                            $SONAR_SCANNER/bin/sonar-scanner \
-                              -Dsonar.projectKey=devsecops-test \
-                              -Dsonar.sources=. \
-                              -Dsonar.host.url=http://localhost:9000 \
-                              -Dsonar.login=$SONAR_TOKEN
-                        '''
-                    }
-                }
+          steps {
+        echo 'Starting SonarQube SAST Scan...'
+        withSonarQubeEnv('sonarqube') {
+            withCredentials([string(credentialsId: 'newtoken', variable: 'SONAR_TOKEN')]) {
+                sh '''
+                    docker run --rm \
+                      -v "$PWD/temp_repo:/usr/src" \
+                      sonarsource/sonar-scanner-cli \
+                      -Dsonar.projectKey=devsecops-test \
+                      -Dsonar.sources=. \
+                      -Dsonar.host.url=http://192.168.18.137:9000 \
+                      -Dsonar.login=$SONAR_TOKEN
+                '''
             }
         }
+    }
+}
 
         stage('Build Project') {
             steps {
