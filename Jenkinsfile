@@ -32,36 +32,17 @@ pipeline {
         }
 
     stage('Dependency Check (OWASP)') {
-    environment {
-        REPORT_DIR = 'dependency-check-report'
-    }
-    steps {
-        echo 'Running OWASP Dependency-Check in Docker...'
-        dir('temp_repo') {
-            // Install dependencies first
-            sh 'npm install || true'
+            steps {
+                echo 'Running OWASP Dependency-Check...'
+                sh '''
+                    mkdir -p dependency-check-report
+                    cd temp_repo
+                    $DEPENDENCY_CHECK --project "Universal-SCA-Scan" --scan . --format ALL --out ../dependency-check-report || true
+                    cd ..
+                '''
+                archiveArtifacts artifacts: 'dependency-check-report/*', onlyIfSuccessful: false
+            }
         }
-        withCredentials([string(credentialsId: 'nvdkey', variable: 'NVD_API_KEY')]) {
-            sh '''
-                mkdir -p ${REPORT_DIR}
-                docker run --rm \
-                    -v "$PWD/${REPORT_DIR}:/report" \
-                    -v "$PWD/temp_repo:/src" \
-                    -e NVD_API_KEY=${NVD_API_KEY} \
-                    owasp/dependency-check:latest \
-                    --scan /src \
-                    --exclude '/passwordProtected.zip' \
-                    --exclude '/videoExploit.zip' \
-                    --exclude '/arbitraryFileWrite.zip' \
-                    --format ALL \
-                    --project Universal-SCA-Scan \
-                    --out /report
-            '''
-        }
-        archiveArtifacts artifacts: 'dependency-check-report/.', allowEmptyArchive: true
-    }
-}
-
         stage('SonarQube Scan') {
           steps {
         echo 'Starting SonarQube SAST Scan...'
@@ -80,7 +61,6 @@ pipeline {
         }
     }
 }
-
         stage('Build Project') {
             steps {
                 echo 'Building the Java project with Maven...'
