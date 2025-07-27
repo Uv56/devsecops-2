@@ -3,14 +3,14 @@ pipeline {
 
     environment {
         DEPENDENCY_CHECK = '/opt/dependency-check/dependency-check/bin/dependency-check.sh'
+        SONAR_SCANNER = tool name: 'sonar-scanner'
         ZAP_REPORT_HTML = 'zap_report.html'
-        ZAP_REPORT_XML = 'zap_report.xml'
+        ZAP_REPORT_XML  = 'zap_report.xml'
         ZAP_REPORT_JSON = 'zap_report.json'
-       // TARGET_URL = 'http://98.81.237.97:8080/WebGoat'
+        TARGET_URL      = 'http://localhost:3000' // Replace with actual target
     }
 
     stages {
-        
         stage('Clone Repository') {
             steps {
                 echo 'Cloning the GitHub Repository...'
@@ -21,68 +21,48 @@ pipeline {
             }
         }
 
-       stage('Secret Scan (TruffleHog)') {
+        stage('Secret Scan (TruffleHog)') {
             steps {
                 echo 'Running TruffleHog on latest commit...'
                 sh '''
-                    cd temp_repo
-                    trufflehog --regex --entropy=True --max_depth=10 . > ../trufflehog_report.txt || true
+                    docker run --rm -v $(pwd)/temp_repo:/project trufflesecurity/trufflehog \
+                    filesystem /project > trufflehog_report.txt || true
                 '''
                 archiveArtifacts artifacts: 'trufflehog_report.txt', onlyIfSuccessful: false
             }
         }
-        
 
-       stage('Dependency Check (OWASP)') {
-         steps {
-            echo 'Running OWASP Dependency-Check...'
-
-           withCredentials([string(credentialsId: 'NVD_API_KEY', variable: 'NVD_KEY')]) {
-              sh '''
-                mkdir -p dependency-check-report dc-data
-                cd temp_repo
-
-                $DEPENDENCY_CHECK \
-                    --project "Universal-SCA-Scan" \
-                    --scan . \
-                    --format ALL \
-                    --data ../dc-data \
-                    --out ../dependency-check-report \
-                    --nvdApiKey $NVD_KEY || true
-
-                    cd ..
-                    
-            '''
-             archiveArtifacts artifacts: 'dependency-check-report/*', onlyIfSuccessful: false   
-        }
-
-        
-    }
-}
-
-        
-      
-       stage('SonarQube Scan') {
-          steps {
-        echo 'Starting SonarQube SAST Scan...'
-        withSonarQubeEnv('sonarqube') {
-            withCredentials([string(credentialsId: 'newtoken', variable: 'SONAR_TOKEN')]) {
+        stage('Dependency Check (OWASP)') {
+            steps {
+                echo 'Running OWASP Dependency-Check...'
                 sh '''
-                    docker run --rm \
-                      -v "$PWD/temp_repo:/usr/src" \
-                      sonarsource/sonar-scanner-cli \
-                      -Dsonar.projectKey=devsecops-test \
-                      -Dsonar.sources=. \
-                      -Dsonar.host.url=http://192.168.18.137:9000 \
-                      -Dsonar.login=$SONAR_TOKEN
+                    mkdir -p dependency-check-report
+                    cd temp_repo
+                    $DEPENDENCY_CHECK --project "Universal-SCA-Scan" --scan . --format ALL --out ../dependency-check-report || true
+                    cd ..
                 '''
+                archiveArtifacts artifacts: 'dependency-check-report/*', onlyIfSuccessful: false
             }
         }
-    }
-}
 
+        stage('SonarQube Scan') {
+            steps {
+                echo 'Starting SonarQube SAST Scan...'
+                withSonarQubeEnv('sonarqube') {
+                    withCredentials([string(credentialsId: 'newtoken', variable: 'SONAR_TOKEN')]) {
+                        sh '''
+                            cd temp_repo
+                            $SONAR_SCANNER/bin/sonar-scanner \
+                              -Dsonar.projectKey=devsecops-test \
+                              -Dsonar.sources=. \
+                              -Dsonar.host.url=http://localhost:9000 \
+                              -Dsonar.login=$SONAR_TOKEN
+                        '''
+                    }
+                }
+            }
+        }
 
-        
         stage('Build Project') {
             steps {
                 echo 'Building the Java project with Maven...'
@@ -101,38 +81,35 @@ pipeline {
             }
         }
 
-     /*   stage('Deploy to App Server') {
+        stage('Deploy to Server') {
             steps {
                 timeout(time: 3, unit: 'MINUTES') {
                     sshagent(credentials: ['app-server']) {
                         sh '''
-                            echo "Deploying JAR to App Server..."
-                            scp -o StrictHostKeyChecking=no temp_repo/webgoat-server/target/webgoat-server-v8.2.0-SNAPSHOT.jar ubuntu@98.81.237.97:/WebGoat
-                            ssh -o StrictHostKeyChecking=no ubuntu@98.81.237.97 "pkill -f webgoat || true; nohup java -jar /WebGoat/webgoat-server-v8.2.0-SNAPSHOT.jar > /dev/null 2>&1 &"
+                            scp -o StrictHostKeyChecking=no temp_repo/webgoat-server/target/webgoat-server-v8.2.0-SNAPSHOT.jar ubuntu@:/WebGoat
+                            ssh -o StrictHostKeyChecking=no ubuntu@3.109.152.116 "nohup java -jar /WebGoat/webgoat-server-v8.2.0-SNAPSHOT.jar > /dev/null 2>&1 &"
                         '''
                     }
                 }
             }
         }
-        */
-       
-        stage('Run ZAP DAST Scan') {
+
+        stage('Run ZAP DAST Scan (Baseline)') {
             steps {
-                echo 'Running ZAP Full DAST Scan on deployed application...'
+                echo 'Running ZAP Baseline DAST Scan...'
                 sh '''
                     docker run --rm \
                       -v $WORKSPACE:/zap/wrk/:rw \
-                      owasp/zap2docker-stable \
-                      zap-full-scan.py -t $TARGET_URL \
+                      zaproxy/zap-stable \
+                      zap-baseline.py -t $TARGET_URL \
                       -r $ZAP_REPORT_HTML -x $ZAP_REPORT_XML -J $ZAP_REPORT_JSON || true
                 '''
                 archiveArtifacts artifacts: "${ZAP_REPORT_HTML}, ${ZAP_REPORT_XML}, ${ZAP_REPORT_JSON}", onlyIfSuccessful: false
             }
         }
-        
     }
 
-   post {
+    post {
         always {
             echo 'Cleaning up temporary files...'
             sh '''
@@ -141,5 +118,4 @@ pipeline {
             '''
         }
     }
-    
 }
