@@ -37,7 +37,7 @@ pipeline {
     }
     steps {
         echo 'Running OWASP Dependency-Check in Docker...'
-        withCredentials([string(credentialsId: 'NVD_API_KEY', variable: 'NVD_API_KEY')]) {
+        withCredentials([string(credentialsId: 'nvdkey', variable: 'NVD_API_KEY')]) {
             sh '''
                 mkdir -p ${REPORT_DIR}
                 docker run --rm \
