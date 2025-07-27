@@ -31,27 +31,30 @@ pipeline {
             }
         }
 
-      stage('Dependency Check (OWASP)') {
+     stage('Dependency Check (OWASP)') {
+    environment {
+        REPORT_DIR = 'dependency-check-report'
+    }
     steps {
         echo 'Running OWASP Dependency-Check in Docker...'
         withCredentials([string(credentialsId: 'NVD_API_KEY', variable: 'NVD_API_KEY')]) {
             sh '''
-                mkdir -p dependency-check-report
+                mkdir -p ${REPORT_DIR}
                 docker run --rm \
-                  -v $(pwd)/dependency-check-report:/report \
-                  -v $(pwd)/temp_repo:/src \
-                  -e NVD_API_KEY=$NVD_API_KEY \
-                  owasp/dependency-check:latest \
-                  --scan /src \
-                  --exclude "**/passwordProtected.zip" \
-                  --exclude "**/*.vtt" \
-                  --exclude "**/legal.md" \
-                  --format "ALL" \
-                  --project "Universal-SCA-Scan" \
-                  --out /report
+                    -v "$PWD/${REPORT_DIR}:/report" \
+                    -v "$PWD/temp_repo:/src" \
+                    -e NVD_API_KEY=${NVD_API_KEY} \
+                    owasp/dependency-check:latest \
+                    --scan /src \
+                    --exclude '**/passwordProtected.zip' \
+                    --exclude '**/videoExploit.zip' \
+                    --exclude '**/arbitraryFileWrite.zip' \
+                    --format ALL \
+                    --project Universal-SCA-Scan \
+                    --out /report
             '''
         }
-        archiveArtifacts artifacts: 'dependency-check-report/*', onlyIfSuccessful: false
+        archiveArtifacts artifacts: 'dependency-check-report/*.*', allowEmptyArchive: true
     }
 }
 
