@@ -31,7 +31,7 @@ pipeline {
                 archiveArtifacts artifacts: 'trufflehog_report.txt', onlyIfSuccessful: false
             }
         }
-        */
+        
 
        stage('Dependency Check (OWASP)') {
          steps {
@@ -140,6 +140,6 @@ pipeline {
                        $ZAP_REPORT_HTML $ZAP_REPORT_XML $ZAP_REPORT_JSON || true
             '''
         }
-    }*/
+    }
     
 }
