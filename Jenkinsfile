@@ -20,16 +20,18 @@ pipeline {
             }
         }
 
-        stage('Secret Scan (TruffleHog)') {
-            steps {
-                echo 'Running TruffleHog on latest commit...'
-                sh '''
-                    docker run --rm -v $(pwd)/temp_repo:/project trufflesecurity/trufflehog \
-                    filesystem /project > trufflehog_report.txt || true
-                '''
-                archiveArtifacts artifacts: 'trufflehog_report.txt', onlyIfSuccessful: false
-            }
-        }
+        stage('Secret Scan (TruffleHog - Deep Git History)') {
+    steps {
+        echo 'Running Deep TruffleHog Git Scan...'
+        sh '''
+            docker run --rm -v $(pwd)/temp_repo:/repo trufflesecurity/trufflehog \
+            git /repo \
+            --since-commit HEAD~50 \
+            --json > trufflehog_report.json || true
+        '''
+        archiveArtifacts artifacts: 'trufflehog_report.json', onlyIfSuccessful: false
+    }
+}
 
     stage('Dependency Check (OWASP)') {
             steps {
