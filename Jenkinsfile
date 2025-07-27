@@ -52,7 +52,7 @@ pipeline {
                             -e NVD_API_KEY=${NVD_API_KEY} \
                             owasp/dependency-check:latest \
                             --scan /src \
-                            --disableUpdate \
+                            --noupdate \
                             --exclude '/passwordProtected.zip' \
                             --exclude '/videoExploit.zip' \
                             --exclude '/arbitraryFileWrite.zip' \
