@@ -32,17 +32,22 @@ pipeline {
         }
 
         stage('Dependency Check (OWASP)') {
-            steps {
-                echo 'Running OWASP Dependency-Check...'
-                sh '''
-                    mkdir -p dependency-check-report
-                    cd temp_repo
-                    $DEPENDENCY_CHECK --project "Universal-SCA-Scan" --scan . --format ALL --out ../dependency-check-report || true
-                    cd ..
-                '''
-                archiveArtifacts artifacts: 'dependency-check-report/*', onlyIfSuccessful: false
-            }
-        }
+    steps {
+        echo 'Running OWASP Dependency-Check in Docker...'
+        sh '''
+            mkdir -p dependency-check-report
+            docker run --rm \
+              -v $(pwd)/dependency-check-report:/report \
+              -v $(pwd)/temp_repo:/src \
+              owasp/dependency-check:latest \
+              --scan /src \
+              --format "ALL" \
+              --project "Universal-SCA-Scan" \
+              --out /report || true
+        '''
+        archiveArtifacts artifacts: 'dependency-check-report/*', onlyIfSuccessful: false
+    }
+}
 
         stage('SonarQube Scan') {
           steps {
