@@ -123,4 +123,20 @@ pipeline {
                       -v $WORKSPACE:/zap/wrk/:rw \
                       zaproxy/zap-stable \
                       zap-baseline.py -t $TARGET_URL \
-                      -r $ZAP
+                      -r $ZAP_REPORT_HTML -x $ZAP_REPORT_XML -J $ZAP_REPORT_JSON || true
+                '''
+                archiveArtifacts artifacts: "${ZAP_REPORT_HTML}, ${ZAP_REPORT_XML}, ${ZAP_REPORT_JSON}", onlyIfSuccessful: false
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Cleaning up temporary files...'
+            sh '''
+                rm -rf temp_repo dependency-check-report trufflehog_report.txt \
+                       $ZAP_REPORT_HTML $ZAP_REPORT_XML $ZAP_REPORT_JSON || true
+            '''
+        }
+    }
+}
