@@ -20,6 +20,7 @@ pipeline {
             }
         }
 
+        /*
         stage('Secret Scan (TruffleHog)') {
             steps {
                 echo 'Running TruffleHog on latest commit...'
@@ -30,60 +31,58 @@ pipeline {
                 archiveArtifacts artifacts: 'trufflehog_report.txt', onlyIfSuccessful: false
             }
         }
+        */
 
-    stage('Dependency Check (OWASP)') {
-    environment {
-        REPORT_DIR = 'dependency-check-report'
-    }
-    steps {
-        echo 'Installing Node dependencies before Dependency-Check...'
-        dir('temp_repo') {
-            sh 'npm install || true'
-        }
-
-        echo 'Running OWASP Dependency-Check with --disableUpdate for faster test...'
-        withCredentials([string(credentialsId: 'nvdkey', variable: 'NVD_API_KEY')]) {
-            sh '''
-                mkdir -p ${REPORT_DIR}
-                docker run --rm \
-                    -v "$PWD/${REPORT_DIR}:/report" \
-                    -v "$PWD/temp_repo:/src" \
-                    -e NVD_API_KEY=${NVD_API_KEY} \
-                    owasp/dependency-check:latest \
-                    --scan /src \
-                    --disableUpdate \
-                    --exclude '**/passwordProtected.zip' \
-                    --exclude '**/videoExploit.zip' \
-                    --exclude '**/arbitraryFileWrite.zip' \
-                    --format ALL \
-                    --project Universal-SCA-Scan \
-                    --out /report
-            '''
-        }
-
-        archiveArtifacts artifacts: 'dependency-check-report/*.*', allowEmptyArchive: true
-    }
-}
-
-
-        stage('SonarQube Scan') {
-          steps {
-        echo 'Starting SonarQube SAST Scan...'
-        withSonarQubeEnv('sonarqube') {
-            withCredentials([string(credentialsId: 'newtoken', variable: 'SONAR_TOKEN')]) {
-                sh '''
-                    docker run --rm \
-                      -v "$PWD/temp_repo:/usr/src" \
-                      sonarsource/sonar-scanner-cli \
-                      -Dsonar.projectKey=devsecops-test \
-                      -Dsonar.sources=. \
-                      -Dsonar.host.url=http://192.168.18.137:9000 \
-                      -Dsonar.login=$SONAR_TOKEN
-                '''
+        stage('Dependency Check (OWASP)') {
+            environment {
+                REPORT_DIR = 'dependency-check-report'
+            }
+            steps {
+                echo 'Running OWASP Dependency-Check in Docker...'
+                dir('temp_repo') {
+                    // Install dependencies first
+                    sh 'npm install || true'
+                }
+                withCredentials([string(credentialsId: 'nvdkey', variable: 'NVD_API_KEY')]) {
+                    sh '''
+                        mkdir -p ${REPORT_DIR}
+                        docker run --rm \
+                            -v "$PWD/${REPORT_DIR}:/report" \
+                            -v "$PWD/temp_repo:/src" \
+                            -e NVD_API_KEY=${NVD_API_KEY} \
+                            owasp/dependency-check:latest \
+                            --scan /src \
+                            --disableUpdate \
+                            --exclude '/passwordProtected.zip' \
+                            --exclude '/videoExploit.zip' \
+                            --exclude '/arbitraryFileWrite.zip' \
+                            --format ALL \
+                            --project Universal-SCA-Scan \
+                            --out /report
+                    '''
+                }
+                archiveArtifacts artifacts: 'dependency-check-report/.', allowEmptyArchive: true
             }
         }
-    }
-}
+
+        stage('SonarQube Scan') {
+            steps {
+                echo 'Starting SonarQube SAST Scan...'
+                withSonarQubeEnv('sonarqube') {
+                    withCredentials([string(credentialsId: 'newtoken', variable: 'SONAR_TOKEN')]) {
+                        sh '''
+                            docker run --rm \
+                              -v "$PWD/temp_repo:/usr/src" \
+                              sonarsource/sonar-scanner-cli \
+                              -Dsonar.projectKey=devsecops-test \
+                              -Dsonar.sources=. \
+                              -Dsonar.host.url=http://192.168.18.137:9000 \
+                              -Dsonar.login=$SONAR_TOKEN
+                        '''
+                    }
+                }
+            }
+        }
 
         stage('Build Project') {
             steps {
@@ -124,20 +123,4 @@ pipeline {
                       -v $WORKSPACE:/zap/wrk/:rw \
                       zaproxy/zap-stable \
                       zap-baseline.py -t $TARGET_URL \
-                      -r $ZAP_REPORT_HTML -x $ZAP_REPORT_XML -J $ZAP_REPORT_JSON || true
-                '''
-                archiveArtifacts artifacts: "${ZAP_REPORT_HTML}, ${ZAP_REPORT_XML}, ${ZAP_REPORT_JSON}", onlyIfSuccessful: false
-            }
-        }
-    }
-
-    post {
-        always {
-            echo 'Cleaning up temporary files...'
-            sh '''
-                rm -rf temp_repo dependency-check-report trufflehog_report.txt \
-                       $ZAP_REPORT_HTML $ZAP_REPORT_XML $ZAP_REPORT_JSON || true
-            '''
-        }
-    }
-}
+                      -r $ZAP
