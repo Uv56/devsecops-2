@@ -43,6 +43,9 @@ pipeline {
                   -e NVD_API_KEY=$NVD_API_KEY \
                   owasp/dependency-check:latest \
                   --scan /src \
+                  --exclude "**/passwordProtected.zip" \
+                  --exclude "**/*.vtt" \
+                  --exclude "**/legal.md" \
                   --format "ALL" \
                   --project "Universal-SCA-Scan" \
                   --out /report
