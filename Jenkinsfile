@@ -21,7 +21,7 @@ pipeline {
             }
         }
 
-     /*   stage('Secret Scan (TruffleHog)') {
+       stage('Secret Scan (TruffleHog)') {
             steps {
                 echo 'Running TruffleHog on latest commit...'
                 sh '''
@@ -61,7 +61,7 @@ pipeline {
 }
 
         
-      /*
+      
        stage('SonarQube Scan') {
           steps {
         echo 'Starting SonarQube SAST Scan...'
@@ -82,7 +82,7 @@ pipeline {
 }
 
 
-        /*
+        
         stage('Build Project') {
             steps {
                 echo 'Building the Java project with Maven...'
@@ -101,7 +101,7 @@ pipeline {
             }
         }
 
-        stage('Deploy to App Server') {
+     /*   stage('Deploy to App Server') {
             steps {
                 timeout(time: 3, unit: 'MINUTES') {
                     sshagent(credentials: ['app-server']) {
@@ -115,7 +115,7 @@ pipeline {
             }
         }
         */
-       /*
+       
         stage('Run ZAP DAST Scan') {
             steps {
                 echo 'Running ZAP Full DAST Scan on deployed application...'
@@ -129,10 +129,10 @@ pipeline {
                 archiveArtifacts artifacts: "${ZAP_REPORT_HTML}, ${ZAP_REPORT_XML}, ${ZAP_REPORT_JSON}", onlyIfSuccessful: false
             }
         }
-        */
+        
     }
 
-/*    post {
+   post {
         always {
             echo 'Cleaning up temporary files...'
             sh '''
