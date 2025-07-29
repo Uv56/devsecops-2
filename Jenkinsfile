@@ -32,28 +32,27 @@ pipeline {
 }
 
 
-    stage('Dependency Check (OWASP)') {
+   stage('Dependency Check (OWASP)') {
     steps {
-        echo 'Installing Dependencies...'
-        dir('temp_repo') {
-            sh '''
-                [ -f package.json ] && npm install || true
-                [ -f pom.xml ] && mvn install -DskipTests || true
-            '''
-        }
-
         echo 'Running OWASP Dependency-Check...'
         sh '''
             mkdir -p dependency-check-report
             cd temp_repo
+
+            # Pre-install dependencies for accurate scan
+            npm install || true
+            pip install -r requirements.txt || true
+            composer install || true
+            dotnet restore || true
+            go mod tidy || true
+
+            cd ..
             $DEPENDENCY_CHECK \
               --project "Universal-SCA-Scan" \
-              --scan . \
-              --enableRetireJS \
-              --enableExperimental \
+              --scan temp_repo \
               --format ALL \
-              --out ../dependency-check-report || true
-            cd ..
+              --out dependency-check-report \
+              --enableExperimental --enableRetireJS || true
         '''
         archiveArtifacts artifacts: 'dependency-check-report/*', onlyIfSuccessful: false
     }
