@@ -15,6 +15,7 @@ pipeline {
                 echo 'Cloning the GitHub Repository...'
                 sh '''
                     rm -rf temp_repo
+                    git config --global http.postBuffer 524288000
                     git clone https://github.com/Akashsonawane571/devsecops-test.git temp_repo
                 '''
             }
