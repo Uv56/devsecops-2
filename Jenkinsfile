@@ -15,7 +15,6 @@ pipeline {
                 echo 'Cloning the GitHub Repository...'
                 sh '''
                     rm -rf temp_repo
-                    git config --global http.postBuffer 524288000
                     git clone https://github.com/Akashsonawane571/devsecops-test.git temp_repo
                 '''
             }
@@ -33,32 +32,18 @@ pipeline {
 }
 
 
-   stage('Dependency Check (OWASP)') {
-    steps {
-        echo 'Running OWASP Dependency-Check...'
-        sh '''
-            mkdir -p dependency-check-report
-            cd temp_repo
-
-            # Pre-install dependencies for accurate scan
-            npm install || true
-            pip install -r requirements.txt || true
-            composer install || true
-            dotnet restore || true
-            go mod tidy || true
-
-            cd ..
-            $DEPENDENCY_CHECK \
-              --project "Universal-SCA-Scan" \
-              --scan temp_repo \
-              --format ALL \
-              --out dependency-check-report \
-              --enableExperimental --enableRetireJS || true
-        '''
-        archiveArtifacts artifacts: 'dependency-check-report/*', onlyIfSuccessful: false
-    }
-}
-
+    stage('Dependency Check (OWASP)') {
+            steps {
+                echo 'Running OWASP Dependency-Check...'
+                sh '''
+                    mkdir -p dependency-check-report
+                    cd temp_repo
+                    $DEPENDENCY_CHECK --project "Universal-SCA-Scan" --scan . --format ALL --out ../dependency-check-report || true
+                    cd ..
+                '''
+                archiveArtifacts artifacts: 'dependency-check-report/*', onlyIfSuccessful: false
+            }
+        }
         stage('SonarQube Scan') {
           steps {
         echo 'Starting SonarQube SAST Scan...'
@@ -133,3 +118,4 @@ pipeline {
         }
     }
 }
+Final code till 30-07
