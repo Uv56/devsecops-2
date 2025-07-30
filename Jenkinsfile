@@ -24,8 +24,7 @@ pipeline {
             steps {
                 echo 'Running TruffleHog on latest commit...'
                 sh '''
-                    docker run --rm -v $(pwd)/temp_repo:/project trufflesecurity/trufflehog \
-                    filesystem /project > trufflehog_report.json || true
+                    trufflehog filesystem temp_repo > trufflehog_report.json || true
                 '''
                 archiveArtifacts artifacts: 'trufflehog_report.json', onlyIfSuccessful: false
             }
