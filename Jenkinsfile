@@ -100,7 +100,10 @@ pipeline {
             steps {
                 echo 'Running ZAP Baseline DAST Scan...'
                 sh '''
-                    docker run --rm \
+                      chmod -R a+rwx $WORKSPACE
+                      docker run --rm \
+                      --user root \
+                      --network host \
                       -v $WORKSPACE:/zap/wrk/:rw \
                       zaproxy/zap-stable \
                       zap-baseline.py -t $TARGET_URL \
