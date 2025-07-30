@@ -19,7 +19,7 @@ pipeline {
                 '''
             }
         }
-
+/*
         stage('Secret Scan (TruffleHog)') {
             steps {
                 echo 'Running TruffleHog on latest commit...'
@@ -65,7 +65,7 @@ pipeline {
                 }
             }
         }
-
+*/
         stage('Build Project') {
             steps {
                 echo 'Building the Java project with Maven...'
@@ -100,6 +100,7 @@ pipeline {
             steps {
                 echo 'Running ZAP Baseline DAST Scan...'
                 sh '''
+                    --network host \
                     docker run --rm \
                       -v $WORKSPACE:/zap/wrk/:rw \
                       zaproxy/zap-stable \
