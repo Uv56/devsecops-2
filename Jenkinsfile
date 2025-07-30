@@ -29,8 +29,7 @@ pipeline {
                 '''
                 archiveArtifacts artifacts: 'trufflehog_report.json', onlyIfSuccessful: false
             }
-        }
-
+        }
 
         stage('Dependency Check (OWASP)') {
             steps {
