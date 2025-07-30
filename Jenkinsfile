@@ -6,7 +6,7 @@ pipeline {
         ZAP_REPORT_HTML  = 'zap_report.html'
         ZAP_REPORT_XML   = 'zap_report.xml'
         ZAP_REPORT_JSON  = 'zap_report.json'
-        TARGET_URL       = 'http://localhost:3000' // Replace with actual target
+        TARGET_URL       = 'http://192.168.18.137:3000' // Replace with actual target
     }
 
     stages {
@@ -100,7 +100,6 @@ pipeline {
             steps {
                 echo 'Running ZAP Baseline DAST Scan...'
                 sh '''
-                    --network host \
                     docker run --rm \
                       -v $WORKSPACE:/zap/wrk/:rw \
                       zaproxy/zap-stable \
