@@ -22,15 +22,15 @@ pipeline {
 
         stage('Secret Scan (TruffleHog)') {
             steps {
-                echo 'Running TruffleHog on latest commit only...'
+                echo 'Running TruffleHog on latest commit...'
                 sh '''
-                    cd temp_repo
-                    trufflehog --regex --entropy=True --max_depth=10 . > ../trufflehog_report.json || true
-                    cd ..
+                    docker run --rm -v $(pwd)/temp_repo:/project trufflesecurity/trufflehog \
+                    filesystem /project > trufflehog_report.json || true
                 '''
                 archiveArtifacts artifacts: 'trufflehog_report.json', onlyIfSuccessful: false
             }
-        }
+        }
+
 
         stage('Dependency Check (OWASP)') {
             steps {
