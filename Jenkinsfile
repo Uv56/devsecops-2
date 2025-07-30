@@ -20,19 +20,15 @@ pipeline {
             }
         }
 
-         stage('Secret Scan (TruffleHog)') {
+         stage('Clone Repository') {
             steps {
-                echo 'Running TruffleHog on latest commit only...'
-                sh '''
-                  # Clone only latest commit
-                  cd temp_repo
-                  # Run trufflehog locally on shallow clone
-                  trufflehog --regex --entropy=True --max_depth=10 . > ../trufflehog_report.json || true
-                  cd ..
-                '''
-                archiveArtifacts artifacts: 'trufflehog_report.json', onlyIfSuccessful: false
-          }
-        }
+               echo 'Cloning full Git history...'
+               sh '''
+                   rm -rf temp_repo
+                   git clone --depth=1000 https://github.com/Akashsonawane571/devsecops-test.git temp_repo
+               '''
+            }
+        }     
 
         stage('Dependency Check (OWASP)') {
             steps {
