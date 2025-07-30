@@ -24,6 +24,7 @@ pipeline {
             steps {
                 echo 'Running TruffleHog on latest commit...'
                 sh '''
+                    export TRUFFLEHOG_NO_UPDATE=true
                     trufflehog filesystem temp_repo > trufflehog_report.json || true
                 '''
                 archiveArtifacts artifacts: 'trufflehog_report.json', onlyIfSuccessful: false
