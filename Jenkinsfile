@@ -9,6 +9,7 @@ pipeline {
         TARGET_URL       = 'http://localhost:3000' // Replace with actual target
     }
 
+    stages {
         stage('Clone Repository') {
             steps {
                 echo 'Cloning full Git history...'
@@ -18,18 +19,17 @@ pipeline {
                 '''
             }
         }
-         stage('Secret Scan (TruffleHog)') {
+
+        stage('Secret Scan (TruffleHog)') {
             steps {
                 echo 'Running TruffleHog on latest commit only...'
                 sh '''
-                  # Clone only latest commit
-                  cd temp_repo
-                  # Run trufflehog locally on shallow clone
-                  trufflehog --regex --entropy=True --max_depth=10 . > ../trufflehog_report.json || true
-                  cd ..
+                    cd temp_repo
+                    trufflehog --regex --entropy=True --max_depth=10 . > ../trufflehog_report.json || true
+                    cd ..
                 '''
                 archiveArtifacts artifacts: 'trufflehog_report.json', onlyIfSuccessful: false
-          }
+            }
         }
 
         stage('Dependency Check (OWASP)') {
