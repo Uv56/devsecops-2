@@ -65,7 +65,7 @@ pipeline {
                 }
             }
         }
-*/
+
         stage('Build Project') {
             steps {
                 echo 'Building the Java project with Maven...'
@@ -95,7 +95,7 @@ pipeline {
                 '''
             }
         }
-
+*/
         stage('Run ZAP DAST Scan (Baseline)') {
             steps {
                 echo 'Running ZAP Baseline DAST Scan...'
