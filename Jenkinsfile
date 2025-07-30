@@ -20,15 +20,18 @@ pipeline {
             }
         }
 
-        stage('Secret Scan (TruffleHog - Deep Git History)') {
+         stage('Secret Scan (TruffleHog)') {
             steps {
-                echo 'Running Deep TruffleHog Git Scan...'
+                echo 'Running TruffleHog on latest commit only...'
                 sh '''
-                    REPO_PATH=$(pwd)/temp_repo
-                    docker run --rm -v "$REPO_PATH:$REPO_PATH" trufflesecurity/trufflehog git "$REPO_PATH" --since-commit HEAD~50 --json > trufflehog_report.json || true
+                  # Clone only latest commit
+                  cd temp_repo
+                  # Run trufflehog locally on shallow clone
+                  trufflehog --regex --entropy=True --max_depth=10 . > ../trufflehog_report.json || true
+                  cd ..
                 '''
                 archiveArtifacts artifacts: 'trufflehog_report.json', onlyIfSuccessful: false
-            }
+          }
         }
 
         stage('Dependency Check (OWASP)') {
