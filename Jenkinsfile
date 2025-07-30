@@ -3,10 +3,10 @@ pipeline {
 
     environment {
         DEPENDENCY_CHECK = '/opt/dependency-check/dependency-check/bin/dependency-check.sh'
-        ZAP_REPORT_HTML = 'zap_report.html'
-        ZAP_REPORT_XML  = 'zap_report.xml'
-        ZAP_REPORT_JSON = 'zap_report.json'
-        TARGET_URL      = 'http://localhost:3000' // Replace with actual target
+        ZAP_REPORT_HTML  = 'zap_report.html'
+        ZAP_REPORT_XML   = 'zap_report.xml'
+        ZAP_REPORT_JSON  = 'zap_report.json'
+        TARGET_URL       = 'http://localhost:3000' // Replace with actual target
     }
 
     stages {
@@ -20,48 +20,52 @@ pipeline {
             }
         }
 
-       stage('Secret Scan (TruffleHog - Deep Git History)') {
-    steps {
-        echo 'Running Deep TruffleHog Git Scan...'
-        sh '''
-            REPO_PATH=$(pwd)/temp_repo
-            docker run --rm -v "$REPO_PATH:$REPO_PATH" trufflesecurity/trufflehog git "$REPO_PATH" --since-commit HEAD~50 --json > trufflehog_report.json || true
-        '''
-        archiveArtifacts artifacts: 'trufflehog_report.json', onlyIfSuccessful: false
-    }
-}
+        stage('Secret Scan (TruffleHog - Deep Git History)') {
+            steps {
+                echo 'Running Deep TruffleHog Git Scan...'
+                sh '''
+                    REPO_PATH=$(pwd)/temp_repo
+                    docker run --rm -v "$REPO_PATH:$REPO_PATH" trufflesecurity/trufflehog git "$REPO_PATH" --since-commit HEAD~50 --json > trufflehog_report.json || true
+                '''
+                archiveArtifacts artifacts: 'trufflehog_report.json', onlyIfSuccessful: false
+            }
+        }
 
-
-    stage('Dependency Check (OWASP)') {
+        stage('Dependency Check (OWASP)') {
             steps {
                 echo 'Running OWASP Dependency-Check...'
                 sh '''
                     mkdir -p dependency-check-report
-                    cd temp_repo
-                    $DEPENDENCY_CHECK --project "Universal-SCA-Scan" --scan . --format ALL --out ../dependency-check-report || true
-                    cd ..
+                    /opt/dependency-check/dependency-check/bin/dependency-check.sh \
+                      --project "Universal-SCA-Scan" \
+                      --scan temp_repo \
+                      --format ALL \
+                      --enableExperimental \
+                      --out dependency-check-report || true
                 '''
                 archiveArtifacts artifacts: 'dependency-check-report/*', onlyIfSuccessful: false
             }
         }
+
         stage('SonarQube Scan') {
-          steps {
-        echo 'Starting SonarQube SAST Scan...'
-        withSonarQubeEnv('sonarqube') {
-            withCredentials([string(credentialsId: 'newtoken', variable: 'SONAR_TOKEN')]) {
-                sh '''
-                    docker run --rm \
-                      -v "$PWD/temp_repo:/usr/src" \
-                      sonarsource/sonar-scanner-cli \
-                      -Dsonar.projectKey=devsecops-test \
-                      -Dsonar.sources=. \
-                      -Dsonar.host.url=http://192.168.18.137:9000 \
-                      -Dsonar.login=$SONAR_TOKEN
-                '''
+            steps {
+                echo 'Starting SonarQube SAST Scan...'
+                withSonarQubeEnv('sonarqube') {
+                    withCredentials([string(credentialsId: 'newtoken', variable: 'SONAR_TOKEN')]) {
+                        sh '''
+                            docker run --rm \
+                              -v "$PWD/temp_repo:/usr/src" \
+                              sonarsource/sonar-scanner-cli \
+                              -Dsonar.projectKey=devsecops-test \
+                              -Dsonar.sources=. \
+                              -Dsonar.host.url=http://192.168.18.137:9000 \
+                              -Dsonar.login=$SONAR_TOKEN
+                        '''
+                    }
+                }
             }
         }
-    }
-}
+
         stage('Build Project') {
             steps {
                 echo 'Building the Java project with Maven...'
@@ -118,4 +122,3 @@ pipeline {
         }
     }
 }
-Final code till 30-07
