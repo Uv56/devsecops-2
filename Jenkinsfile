@@ -20,15 +20,15 @@ pipeline {
             }
         }
 
-         stage('Clone Repository') {
+        stage('Clone Repository') {
             steps {
-               echo 'Cloning full Git history...'
-               sh '''
-                   rm -rf temp_repo
-                   git clone --depth=1000 https://github.com/Akashsonawane571/devsecops-test.git temp_repo
-               '''
+                echo 'Cloning full Git history...'
+                sh '''
+                    rm -rf temp_repo
+                    git clone --depth=1000 https://github.com/Akashsonawane571/devsecops-test.git temp_repo
+                '''
             }
-        }     
+        }
 
         stage('Dependency Check (OWASP)') {
             steps {
