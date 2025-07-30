@@ -9,17 +9,6 @@ pipeline {
         TARGET_URL       = 'http://localhost:3000' // Replace with actual target
     }
 
-    stages {
-        stage('Clone Repository') {
-            steps {
-                echo 'Cloning the GitHub Repository...'
-                sh '''
-                    rm -rf temp_repo
-                    git clone https://github.com/Akashsonawane571/devsecops-test.git temp_repo
-                '''
-            }
-        }
-
         stage('Clone Repository') {
             steps {
                 echo 'Cloning full Git history...'
@@ -28,6 +17,19 @@ pipeline {
                     git clone --depth=1000 https://github.com/Akashsonawane571/devsecops-test.git temp_repo
                 '''
             }
+        }
+         stage('Secret Scan (TruffleHog)') {
+            steps {
+                echo 'Running TruffleHog on latest commit only...'
+                sh '''
+                  # Clone only latest commit
+                  cd temp_repo
+                  # Run trufflehog locally on shallow clone
+                  trufflehog --regex --entropy=True --max_depth=10 . > ../trufflehog_report.json || true
+                  cd ..
+                '''
+                archiveArtifacts artifacts: 'trufflehog_report.json', onlyIfSuccessful: false
+          }
         }
 
         stage('Dependency Check (OWASP)') {
