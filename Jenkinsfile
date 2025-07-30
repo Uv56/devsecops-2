@@ -24,8 +24,8 @@ pipeline {
             steps {
                 echo 'Running TruffleHog on latest commit...'
                 sh '''
-                    export TRUFFLEHOG_NO_UPDATE=true
-                    trufflehog filesystem temp_repo > trufflehog_report.json || true
+                    docker run --rm -v $(pwd)/temp_repo:/project trufflesecurity/trufflehog \
+                    filesystem /project > trufflehog_report.json || true
                 '''
                 archiveArtifacts artifacts: 'trufflehog_report.json', onlyIfSuccessful: false
             }
@@ -84,16 +84,15 @@ pipeline {
             }
         }
 
-        stage('Deploy to Server') {
+        stage('Run Built Docker Image Locally') {
             steps {
-                timeout(time: 3, unit: 'MINUTES') {
-                    sshagent(credentials: ['app-server']) {
-                        sh '''
-                            scp -o StrictHostKeyChecking=no temp_repo/webgoat-server/target/webgoat-server-v8.2.0-SNAPSHOT.jar ubuntu@:/WebGoat
-                            ssh -o StrictHostKeyChecking=no ubuntu@3.109.152.116 "nohup java -jar /WebGoat/webgoat-server-v8.2.0-SNAPSHOT.jar > /dev/null 2>&1 &"
-                        '''
-                    }
-                }
+                echo 'Running built Docker image locally...'
+                sh '''
+                    docker rm -f juice-shop-running || true
+                    docker run -d --name juice-shop-running -p 3000:3000 juice-shop
+                    echo "Waiting for container to be ready..."
+                    sleep 15
+                '''
             }
         }
 
