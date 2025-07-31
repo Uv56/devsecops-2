@@ -19,7 +19,7 @@ pipeline {
                 '''
             }
         }
-/*
+
         stage('Secret Scan (TruffleHog)') {
             steps {
                 echo 'Running TruffleHog on latest commit...'
@@ -95,7 +95,7 @@ pipeline {
                 '''
             }
         }
-*/
+
         stage('Run ZAP DAST Scan (Baseline)') {
             steps {
                 echo 'Running ZAP Baseline DAST Scan...'
