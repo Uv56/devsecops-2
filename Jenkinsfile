@@ -20,12 +20,13 @@ pipeline {
             }
         }
 
-        stage('Secret Scan (TruffleHog)') {
+         stage('Secret Scan (TruffleHog)') {
             steps {
-                echo 'Running TruffleHog on latest commit...'
+                echo 'Running TruffleHog on latest commit only...'
                 sh '''
-                    docker run --rm -v $(pwd)/temp_repo:/project trufflesecurity/trufflehog \
-                    filesystem /project > trufflehog_report.json || true
+                  cd temp_repo
+                  trufflehog --regex --entropy=True --max_depth=10 . > ../trufflehog_report.json || true
+                  cd ..
                 '''
                 archiveArtifacts artifacts: 'trufflehog_report.json', onlyIfSuccessful: false
             }
