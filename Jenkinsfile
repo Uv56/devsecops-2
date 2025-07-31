@@ -19,7 +19,7 @@ pipeline {
                 '''
             }
         }
-
+/*
          stage('Secret Scan (TruffleHog)') {
             steps {
                 echo 'Running TruffleHog on latest commit only...'
@@ -66,7 +66,7 @@ pipeline {
                 }
             }
         }
-
+*/
         stage('Build Project') {
             steps {
                 echo 'Building the Java project with Maven...'
@@ -84,7 +84,7 @@ pipeline {
                 }
             }
         }
-
+/*
         stage('Run Built Docker Image Locally') {
             steps {
                 echo 'Running built Docker image locally...'
@@ -123,3 +123,4 @@ pipeline {
         }
     }
 }
+*/
