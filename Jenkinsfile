@@ -19,14 +19,15 @@ pipeline {
                 '''
             }
         }
-/*
-         stage('Secret Scan (TruffleHog)') {
+
+        /*
+        stage('Secret Scan (TruffleHog)') {
             steps {
                 echo 'Running TruffleHog on latest commit only...'
                 sh '''
-                  cd temp_repo
-                  trufflehog --regex --entropy=True --max_depth=10 . > ../trufflehog_report.json || true
-                  cd ..
+                    cd temp_repo
+                    trufflehog --regex --entropy=True --max_depth=10 . > ../trufflehog_report.json || true
+                    cd ..
                 '''
                 archiveArtifacts artifacts: 'trufflehog_report.json', onlyIfSuccessful: false
             }
@@ -66,7 +67,8 @@ pipeline {
                 }
             }
         }
-*/
+        */
+
         stage('Build Project') {
             steps {
                 echo 'Building the Java project with Maven...'
@@ -84,7 +86,8 @@ pipeline {
                 }
             }
         }
-/*
+
+        /*
         stage('Run Built Docker Image Locally') {
             steps {
                 echo 'Running built Docker image locally...'
@@ -110,8 +113,8 @@ pipeline {
                 archiveArtifacts artifacts: "${ZAP_REPORT_HTML}, ${ZAP_REPORT_XML}, ${ZAP_REPORT_JSON}", onlyIfSuccessful: false
             }
         }
+        */
     }
-
 
     post {
         always {
@@ -123,4 +126,3 @@ pipeline {
         }
     }
 }
-*/
