@@ -123,7 +123,7 @@ pipeline {
                 withCredentials([string(credentialsId: 'DEFECTDOJO_API_TOKEN', variable: 'DD_API_KEY')]) {
                     sh '''
                         if [ -f trufflehog_report.json ]; then
-                            curl -X POST "http://192.168.18.137:8081/api/key-v2/import-scan/" \
+                            curl -X POST "http://192.168.18.137:8081/api/v2/import-scan/" \
                               -H "Authorization: Token $DD_API_KEY" \
                               -F "file=@trufflehog_report.json" \
                               -F "scan_type=Trufflehog Scan" \
@@ -140,7 +140,7 @@ pipeline {
                 withCredentials([string(credentialsId: 'DEFECTDOJO_API_TOKEN', variable: 'DD_API_KEY')]) {
                     sh '''
                         if [ -f dependency-check-report/dependency-check-report.xml ]; then
-                            curl -X POST "http://192.168.18.137:8081/api/key-v2/import-scan/" \
+                            curl -X POST "http://192.168.18.137:8081/api/v2/import-scan/" \
                               -H "Authorization: Token $DD_API_KEY" \
                               -F "file=@dependency-check-report/dependency-check-report.xml" \
                               -F "scan_type=Dependency Check Scan" \
@@ -157,7 +157,7 @@ pipeline {
                 withCredentials([string(credentialsId: 'DEFECTDOJO_API_TOKEN', variable: 'DD_API_KEY')]) {
                     sh '''
                         if [ -f $ZAP_REPORT_XML ]; then
-                            curl -X POST "http://192.168.18.137:8081/api/key-v2/import-scan/" \
+                            curl -X POST "http://192.168.18.137:8081/api/v2/import-scan/" \
                               -H "Authorization: Token $DD_API_KEY" \
                               -F "file=@$ZAP_REPORT_XML" \
                               -F "scan_type=ZAP Scan" \
