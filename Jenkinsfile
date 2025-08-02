@@ -34,7 +34,7 @@ pipeline {
                 archiveArtifacts artifacts: 'trufflehog_report.json', onlyIfSuccessful: false
             }
         }
-        */
+        
 
         stage('Dependency Check (OWASP)') {
             steps {
@@ -89,6 +89,7 @@ pipeline {
                 }
             }
         }
+        */
 
         
         stage('Run Built Docker Image Locally') {
@@ -116,7 +117,7 @@ pipeline {
                 archiveArtifacts artifacts: "${ZAP_REPORT_HTML}, ${ZAP_REPORT_XML}, ${ZAP_REPORT_JSON}", onlyIfSuccessful: false
             }
         }
-        
+        /*
 
         // ✅ NEW STAGE: Upload to DefectDojo
         stage('Upload TruffleHog Report to DefectDojo') {
@@ -136,6 +137,7 @@ pipeline {
             }
         }
         */
+        /*
         stage('Upload Dependency-Check Report to DefectDojo') {
             steps {
                 withCredentials([string(credentialsId: 'DEFECTDOJO_API_TOKEN', variable: 'DD_API_KEY')]) {
@@ -151,14 +153,15 @@ pipeline {
                     '''
                 }
             }
-        }
-        /*
+        } 
+        */
+        
         stage('Upload ZAP Report to DefectDojo') {
             steps {
                 withCredentials([string(credentialsId: 'DEFECTDOJO_API_TOKEN', variable: 'DD_API_KEY')]) {
                     sh '''
                         if [ -f $ZAP_REPORT_XML ]; then
-                            curl -X POST "http://192.168.18.137:8081/api/v2/engagements/" \
+                            curl -X POST "http://192.168.18.137:8081/api/v2/import-scan/" \
                               -H "Authorization: Token $DD_API_KEY" \
                               -F "file=@$ZAP_REPORT_XML" \
                               -F "scan_type=ZAP Scan" \
@@ -169,7 +172,7 @@ pipeline {
                 }
             }
         }
-        */
+        
     } 
 
     post {
