@@ -141,7 +141,7 @@ pipeline {
                 withCredentials([string(credentialsId: 'DEFECTDOJO_API_TOKEN', variable: 'DD_API_KEY')]) {
                     sh '''
                         if [ -f dependency-check-report/dependency-check-report.xml ]; then
-                            curl -X POST "http://192.168.18.137:8081/api/v2/inport-scan/" \
+                            curl -X POST "http://192.168.18.137:8081/api/v2/import-scan/" \
                               -H "Authorization: Token $DD_API_KEY" \
                               -F "file=@dependency-check-report/dependency-check-report.xml" \
                               -F "scan_type=Dependency Check Scan" \
