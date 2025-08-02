@@ -8,7 +8,7 @@ pipeline {
         ZAP_REPORT_JSON  = 'zap_report.json'
         TARGET_URL       = 'http://192.168.18.137:3000' // Replace with actual target
         DEFECTDOJO_URL   = 'http:192.168.18.137:8081'      // Replace with your local DefectDojo URL
-        ENGAGEMENT_ID    = '111'                          // Replace with your actual engagement ID
+        ENGAGEMENT_ID    = '8'                          // Replace with your actual engagement ID
     }
 
     stages {
