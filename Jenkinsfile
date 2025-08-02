@@ -7,6 +7,8 @@ pipeline {
         ZAP_REPORT_XML   = 'zap_report.xml'
         ZAP_REPORT_JSON  = 'zap_report.json'
         TARGET_URL       = 'http://192.168.18.137:3000' // Replace with actual target
+        DEFECTDOJO_URL   = 'http:192.168.18.137//:8081'      // Replace with your local DefectDojo URL
+        ENGAGEMENT_ID    = '111'                          // Replace with your actual engagement ID
     }
 
     stages {
@@ -20,7 +22,7 @@ pipeline {
             }
         }
 
-        /*
+        
         stage('Secret Scan (TruffleHog)') {
             steps {
                 echo 'Running TruffleHog on latest commit only...'
@@ -67,7 +69,7 @@ pipeline {
                 }
             }
         }
-        */
+        
 
         stage('Build Project') {
             steps {
@@ -87,7 +89,7 @@ pipeline {
             }
         }
 
-        /*
+        
         stage('Run Built Docker Image Locally') {
             steps {
                 echo 'Running built Docker image locally...'
@@ -113,7 +115,59 @@ pipeline {
                 archiveArtifacts artifacts: "${ZAP_REPORT_HTML}, ${ZAP_REPORT_XML}, ${ZAP_REPORT_JSON}", onlyIfSuccessful: false
             }
         }
-        */
+        
+
+        // ✅ NEW STAGE: Upload to DefectDojo
+        stage('Upload TruffleHog Report to DefectDojo') {
+            steps {
+                withCredentials([string(credentialsId: 'DEFECTDOJO_API_TOKEN', variable: 'DD_API_KEY')]) {
+                    sh '''
+                        if [ -f trufflehog_report.json ]; then
+                            curl -X POST "$DEFECTDOJO_URL/api/v2/import-scan/" \
+                              -H "Authorization: Token $DD_API_KEY" \
+                              -F "file=@trufflehog_report.json" \
+                              -F "scan_type=Trufflehog Scan" \
+                              -F "engagement=$ENGAGEMENT_ID" \
+                              -F "active=true" -F "verified=true" -F "close_old_findings=true"
+                        fi
+                    '''
+                }
+            }
+        }
+        
+        stage('Upload Dependency-Check Report to DefectDojo') {
+            steps {
+                withCredentials([string(credentialsId: 'DEFECTDOJO_API_TOKEN', variable: 'DD_API_KEY')]) {
+                    sh '''
+                        if [ -f dependency-check-report/dependency-check-report.xml ]; then
+                            curl -X POST "$DEFECTDOJO_URL/api/v2/import-scan/" \
+                              -H "Authorization: Token $DD_API_KEY" \
+                              -F "file=@dependency-check-report/dependency-check-report.xml" \
+                              -F "scan_type=Dependency Check Scan" \
+                              -F "engagement=$ENGAGEMENT_ID" \
+                              -F "active=true" -F "verified=true" -F "close_old_findings=true"
+                        fi
+                    '''
+                }
+            }
+        }
+        
+        stage('Upload ZAP Report to DefectDojo') {
+            steps {
+                withCredentials([string(credentialsId: 'DEFECTDOJO_API_TOKEN', variable: 'DD_API_KEY')]) {
+                    sh '''
+                        if [ -f $ZAP_REPORT_XML ]; then
+                            curl -X POST "$DEFECTDOJO_URL/api/v2/import-scan/" \
+                              -H "Authorization: Token $DD_API_KEY" \
+                              -F "file=@$ZAP_REPORT_XML" \
+                              -F "scan_type=ZAP Scan" \
+                              -F "engagement=$ENGAGEMENT_ID" \
+                              -F "active=true" -F "verified=true" -F "close_old_findings=true"
+                        fi
+                    '''
+                }
+            }
+        }
     }
 
     post {
