@@ -8,7 +8,7 @@ pipeline {
         ZAP_REPORT_JSON  = 'zap_report.json'
         TARGET_URL       = 'http://192.168.18.137:3000' // Replace with actual target
         DEFECTDOJO_URL   = 'http:192.168.18.137:8081'      // Replace with your local DefectDojo URL
-        ENGAGEMENT_ID    = '1'                          // Replace with your actual engagement ID
+        ENGAGEMENT_ID    = '1'                          // Replace with your actual engagement ID defectdojo
     }
 
     stages {
@@ -22,7 +22,7 @@ pipeline {
             }
         }
 
-        /*
+        
         stage('Secret Scan (TruffleHog)') {
             steps {
                 echo 'Running TruffleHog on latest commit only...'
@@ -51,7 +51,7 @@ pipeline {
                 archiveArtifacts artifacts: 'dependency-check-report/*', onlyIfSuccessful: false
             }
         }
-/*
+
         stage('SonarQube Scan') {
             steps {
                 echo 'Starting SonarQube SAST Scan...'
@@ -89,7 +89,7 @@ pipeline {
                 }
             }
         }
-        */
+        
 
         
         stage('Run Built Docker Image Locally') {
@@ -117,7 +117,7 @@ pipeline {
                 archiveArtifacts artifacts: "${ZAP_REPORT_HTML}, ${ZAP_REPORT_XML}, ${ZAP_REPORT_JSON}", onlyIfSuccessful: false
             }
         }
-        /*
+        
 
         // ✅ NEW STAGE: Upload to DefectDojo
         stage('Upload TruffleHog Report to DefectDojo') {
@@ -125,7 +125,7 @@ pipeline {
                 withCredentials([string(credentialsId: 'DEFECTDOJO_API_TOKEN', variable: 'DD_API_KEY')]) {
                     sh '''
                         if [ -f trufflehog_report.json ]; then
-                            curl -X POST "http://192.168.18.137:8081/api/v2/engagements/" \
+                            curl -X POST "http://192.168.18.137:8081/api/v2/import-scan/" \
                               -H "Authorization: Token $DD_API_KEY" \
                               -F "file=@trufflehog_report.json" \
                               -F "scan_type=Trufflehog Scan" \
@@ -136,8 +136,8 @@ pipeline {
                 }
             }
         }
-        */
-        /*
+        
+        
         stage('Upload Dependency-Check Report to DefectDojo') {
             steps {
                 withCredentials([string(credentialsId: 'DEFECTDOJO_API_TOKEN', variable: 'DD_API_KEY')]) {
@@ -154,7 +154,7 @@ pipeline {
                 }
             }
         } 
-        */
+        
         
         stage('Upload ZAP Report to DefectDojo') {
             steps {
